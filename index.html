@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Veiga Projetos Estruturais</title>
+  <meta name="description" content="Projetos estruturais em concreto, aço e fundações. Solicite seu orçamento.">
+  <meta property="og:title" content="Veiga Projetos Estruturais">
+  <meta property="og:description" content="Projetos estruturais em concreto, aço e fundações. Solicite seu orçamento.">
+  <meta property="og:image" content="https://marcos170202.github.io/veiga/img/brasao.png">
+  <meta property="og:url" content="https://marcos170202.github.io/veiga/">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="clientes.css">
+</head>
+<body>
+  <header class="cab" id="cab">
+    <a class="cab-marca" href="#inicio"><img src="img/brasao-sm.png" alt=""><span><b>VEIGA</b><small>Projetos Estruturais</small></span></a>
+    <nav class="cab-nav" id="cab-nav">
+      <a href="#sobre">Sobre</a><a href="#servicos">Serviços</a><a href="#processo">Como trabalhamos</a><a href="#contato">Contato</a>
+      <a class="bt bt-ouro" href="#orcamento">Solicitar orçamento</a>
+    </nav>
+    <button class="cab-menu" id="cab-menu" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+  </header>
+
+  <section class="hero" id="inicio">
+    <div class="hero-grade" aria-hidden="true"></div>
+    <div class="hero-conteudo">
+      <div class="hero-texto">
+        <div class="selo-topo revelar">Engenharia estrutural</div>
+        <h1 class="titulo-anim" data-titulo>Estruturas seguras, econômicas e construtíveis.</h1>
+        <p class="revelar" style="--d:.5s">Do estudo preliminar ao projeto executivo: concreto armado, estruturas metálicas, fundações, reforços e laudos — com atendimento direto do engenheiro responsável.</p>
+        <div class="hero-acoes revelar" style="--d:.7s">
+          <a class="bt bt-ouro bt-grande" href="#orcamento">Solicitar orçamento <svg><use href="#c-seta"/></svg></a>
+          <a class="bt bt-vazado bt-grande" data-whats href="#" target="_blank" rel="noopener"><svg><use href="#c-whats"/></svg>Falar no WhatsApp</a>
+        </div>
+      </div>
+      <div class="hero-brasao" id="tilt">
+        <div class="brilho" aria-hidden="true"></div>
+        <img src="img/brasao.png" alt="Brasão Veiga Projetos Estruturais">
+      </div>
+    </div>
+    <a class="rolar" href="#sobre" aria-label="Rolar para baixo"><span></span></a>
+  </section>
+
+  <section class="secao" id="sobre">
+    <div class="caixa sobre">
+      <div class="revelar">
+        <div class="rotulo">Quem somos</div>
+        <h2>Engenharia com rigor técnico e proximidade.</h2>
+      </div>
+      <div class="revelar" style="--d:.15s">
+        <p id="quem-somos"></p>
+        <blockquote><span id="lema">Christus Angularis</span><small>Cristo, a pedra angular</small></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao secao-creme" id="servicos">
+    <div class="caixa">
+      <div class="revelar"><div class="rotulo">Serviços</div><h2>O que fazemos</h2></div>
+      <div class="servicos" id="servicos-lista"></div>
+    </div>
+  </section>
+
+  <section class="secao" id="processo">
+    <div class="caixa">
+      <div class="revelar"><div class="rotulo">Como trabalhamos</div><h2>Do primeiro contato à entrega</h2></div>
+      <ol class="etapas" id="etapas">
+        <li class="revelar"><b>1</b><h3>Contato</h3><p>Você conta sobre a obra e envia o que já tiver: arquitetura, fotos, sondagem.</p></li>
+        <li class="revelar" style="--d:.1s"><b>2</b><h3>Orçamento</h3><p>Analisamos o escopo e enviamos a proposta com valor e prazo.</p></li>
+        <li class="revelar" style="--d:.2s"><b>3</b><h3>Documentação</h3><p>Reunimos os dados técnicos necessários e compatibilizamos com a arquitetura.</p></li>
+        <li class="revelar" style="--d:.3s"><b>4</b><h3>Projeto</h3><p>Concepção, modelagem e dimensionamento, com revisões acompanhadas.</p></li>
+        <li class="revelar" style="--d:.4s"><b>5</b><h3>Entrega</h3><p>Pranchas, memoriais e ART, prontos para a obra.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="secao secao-escura" id="orcamento">
+    <div class="caixa orc">
+      <div class="orc-intro revelar">
+        <div class="rotulo">Orçamento</div>
+        <h2>Vamos conversar sobre a sua obra?</h2>
+        <p>Preencha os dados abaixo. Se já tiver o projeto de arquitetura ou outros documentos, anexe — isso agiliza a proposta.</p>
+        <ul class="garantias">
+          <li><svg><use href="#c-ok"/></svg>Resposta rápida pelo WhatsApp ou e-mail</li>
+          <li><svg><use href="#c-ok"/></svg>Seus dados são usados só para o contato</li>
+          <li><svg><use href="#c-ok"/></svg>Sem compromisso</li>
+        </ul>
+      </div>
+
+      <form class="form revelar" id="form" novalidate style="--d:.1s">
+        <div class="form-passos" id="form-corpo">
+          <div class="linha2">
+            <label class="flutua"><input name="nome" required maxlength="120" placeholder=" "><span>Seu nome *</span></label>
+            <label class="flutua"><input name="empresa" maxlength="120" placeholder=" "><span>Empresa (opcional)</span></label>
+          </div>
+          <div class="linha2">
+            <label class="flutua"><input name="telefone" type="tel" maxlength="40" placeholder=" " inputmode="tel"><span>WhatsApp *</span></label>
+            <label class="flutua"><input name="email" type="email" maxlength="120" placeholder=" "><span>E-mail</span></label>
+          </div>
+          <div class="linha2">
+            <label class="flutua"><select name="tipo" id="tipo"><option value="" disabled selected hidden></option></select><span>Tipo de projeto</span></label>
+            <label class="flutua"><input name="cidade" maxlength="80" placeholder=" "><span>Cidade da obra</span></label>
+          </div>
+          <div class="linha2">
+            <label class="flutua"><input name="area" maxlength="30" placeholder=" " inputmode="decimal"><span>Área aproximada (m²)</span></label>
+            <label class="flutua"><select name="prazo"><option value="" disabled selected hidden></option><option>O quanto antes</option><option>Até 30 dias</option><option>Até 60 dias</option><option>Prazo flexível</option></select><span>Prazo desejado</span></label>
+          </div>
+          <label class="flutua"><textarea name="mensagem" required maxlength="4000" rows="4" placeholder=" "></textarea><span>Conte sobre a obra *</span></label>
+          <label class="soltar" id="soltar">
+            <svg><use href="#c-clipe"/></svg>
+            <span><b>Anexar arquivos</b> — arquitetura, fotos, sondagem (até 100 MB cada)</span>
+            <input type="file" id="anexos" multiple hidden>
+          </label>
+          <div class="anexos" id="lista-anexos"></div>
+          <label class="aceite"><input type="checkbox" name="aceite" required><span>Autorizo o contato da Veiga Projetos Estruturais com os dados informados.</span></label>
+          <div class="erro" id="erro" role="alert"></div>
+          <button class="bt bt-ouro bt-grande enviar" type="submit" id="enviar"><span>Enviar solicitação</span><i class="barra-envio" id="barra-envio"></i></button>
+        </div>
+        <div class="sucesso" id="sucesso" hidden>
+          <svg class="check" viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>
+          <h3>Solicitação enviada!</h3>
+          <p>Obrigado, <b id="suc-nome"></b>. Em breve entraremos em contato.</p>
+          <a class="bt bt-vazado" data-whats-resumo href="#" target="_blank" rel="noopener"><svg><use href="#c-whats"/></svg>Adiantar pelo WhatsApp</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="secao" id="contato">
+    <div class="caixa">
+      <div class="revelar"><div class="rotulo">Contato</div><h2>Fale com a gente</h2></div>
+      <div class="contatos">
+        <a class="contato revelar" data-whats href="#" target="_blank" rel="noopener"><span class="ic"><svg><use href="#c-whats"/></svg></span><div><small>WhatsApp</small><b data-campo="telefone"></b></div></a>
+        <a class="contato revelar" style="--d:.1s" id="link-email" href="#"><span class="ic"><svg><use href="#c-email"/></svg></span><div><small>E-mail</small><b data-campo="email"></b></div></a>
+        <div class="contato revelar" style="--d:.2s"><span class="ic"><svg><use href="#c-local"/></svg></span><div><small>Endereço</small><b data-campo="endereco"></b><span data-campo="cidade"></span></div></div>
+        <div class="contato revelar" style="--d:.3s"><span class="ic"><svg><use href="#c-doc"/></svg></span><div><small>CNPJ</small><b data-campo="cnpj"></b><span data-campo="responsavel"></span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="rodape">
+    <img src="img/brasao-sm.png" alt="">
+    <div><b>VEIGA</b> Projetos Estruturais<br><small><span data-campo="cnpj"></span> · <i data-campo="lema"></i></small></div>
+  </footer>
+
+  <a class="whats-flutua" data-whats href="#" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp"><svg><use href="#c-whats"/></svg></a>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="c-seta" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="c-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="c-whats" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.8 8.2c.3-.6.6-.6.9-.6h.6c.2 0 .4 0 .6.5l.8 1.9c.1.2 0 .4-.1.6l-.5.6c-.1.2-.2.3 0 .6.3.5.9 1.3 1.6 1.9.9.8 1.6 1 1.9 1.1.2.1.4.1.5-.1l.7-.9c.2-.2.4-.2.6-.1l1.8.9c.3.1.4.2.4.4 0 .6-.3 1.3-.9 1.6-.5.3-1.3.5-2.3.2a10 10 0 0 1-5.8-5c-.5-1-.6-2.1-.1-2.9z" fill="currentColor"/></symbol>
+    <symbol id="c-email" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="c-local" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="c-doc" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="c-clipe" viewBox="0 0 24 24"><path d="M20 11.5 12.5 19a5 5 0 0 1-7-7l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4L15 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="s0" viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="s1" viewBox="0 0 24 24"><path d="M3 6h18M3 18h18M6 6l6 12 6-12M6 18 12 6l6 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="s2" viewBox="0 0 24 24"><path d="M3 10h18M7 10v10M17 10v10M4 20h16M6 10l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="s3" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0-5 5L4 16v4h4l5.5-5.5a4 4 0 0 0 5-5l-2.5 2.5-2.5-.5-.5-2.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="s4" viewBox="0 0 24 24"><path d="M9 4h6l1 2h3v14H5V6h3zM9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="s5" viewBox="0 0 24 24"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  </defs></svg>
+  <script src="clientes.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "nome": "Veiga Projetos Estruturais",
+  "lema": "Christus Angularis",
+  "cnpj": "68.149.546/0001-42",
+  "responsavel": "Eng. Marcos Eduardo de Souza Veiga",
+  "telefone": "+55 62 99114-7338",
+  "email": "marcos.eduardo108@gmail.com",
+  "endereco": "Rua dos Karajás, 152 – Quilombo",
+  "cidade": "Cuiabá – MT",
+  "cep": "78045-150",
+  "quemSomos": "A Veiga Projetos Estruturais desenvolve projetos de estruturas com rigor técnico, clareza de documentação e acompanhamento próximo de cada cliente. Atuamos desde a concepção estrutural até o projeto executivo, compatibilizando arquitetura e instalações para entregar soluções seguras, econômicas e construtíveis.",
+  "servicos": [
+    "Projetos estruturais em concreto armado",
+    "Estruturas metálicas e pré-moldadas",
+    "Fundações e contenções (sapatas, estacas, arrimos)",
+    "Reforço e recuperação estrutural",
+    "Laudos, inspeções e pareceres técnicos",
+    "Compatibilização e modelagem BIM (IFC)"
+  ]
+}
