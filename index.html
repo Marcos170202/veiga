@@ -3,27 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Veiga Projetos Estruturais</title>
-  <meta name="description" content="Projetos estruturais em concreto, aço e fundações. Solicite seu orçamento.">
+  <title>Veiga Projetos Estruturais | Engenharia estrutural em Cuiabá – MT</title>
+  <meta name="description" content="Projetos estruturais em concreto armado, estruturas metálicas, fundações, reforços e laudos. Atendimento direto com o engenheiro. Solicite seu orçamento.">
+  <meta name="theme-color" content="#27525A">
   <meta property="og:title" content="Veiga Projetos Estruturais">
   <meta property="og:description" content="Projetos estruturais em concreto, aço e fundações. Solicite seu orçamento.">
   <meta property="og:image" content="https://marcos170202.github.io/veiga/img/brasao.png">
   <meta property="og:url" content="https://marcos170202.github.io/veiga/">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <link rel="canonical" href="https://marcos170202.github.io/veiga/">
   <link rel="icon" href="img/favicon.png">
+  <link rel="apple-touch-icon" href="img/brasao-sm.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="clientes.css">
 </head>
 <body>
+  <a class="pular" href="#orcamento">Pular para o formulário de orçamento</a>
   <header class="cab" id="cab">
     <a class="cab-marca" href="#inicio"><img src="img/brasao-sm.png" alt=""><span><b>VEIGA</b><small>Projetos Estruturais</small></span></a>
     <nav class="cab-nav" id="cab-nav">
-      <a href="#sobre">Sobre</a><a href="#servicos">Serviços</a><a href="#processo">Como trabalhamos</a><a href="#contato">Contato</a>
+      <a href="#sobre">Sobre</a><a href="#servicos">Serviços</a><a href="#processo">Como trabalhamos</a><a href="#duvidas">Dúvidas</a><a href="#contato">Contato</a>
       <a class="bt bt-ouro" href="#orcamento">Solicitar orçamento</a>
     </nav>
-    <button class="cab-menu" id="cab-menu" aria-label="Abrir menu"><span></span><span></span><span></span></button>
+    <button class="cab-menu" id="cab-menu" aria-label="Abrir menu" aria-expanded="false" aria-controls="cab-nav"><span></span><span></span><span></span></button>
   </header>
 
   <section class="hero" id="inicio">
@@ -79,6 +85,17 @@
     </div>
   </section>
 
+  <section class="secao secao-creme" id="duvidas">
+    <div class="caixa duvidas">
+      <div class="revelar">
+        <div class="rotulo">Dúvidas frequentes</div>
+        <h2>Perguntas que sempre recebemos</h2>
+        <p class="duvidas-sub">Não achou a sua? <a href="#orcamento">Mande pelo formulário</a> ou chame no <a data-whats href="#" target="_blank" rel="noopener">WhatsApp</a>.</p>
+      </div>
+      <div class="faq" id="faq"></div>
+    </div>
+  </section>
+
   <section class="secao secao-escura" id="orcamento">
     <div class="caixa orc">
       <div class="orc-intro revelar">
@@ -117,7 +134,7 @@
             <input type="file" id="anexos" multiple hidden>
           </label>
           <div class="anexos" id="lista-anexos"></div>
-          <label class="aceite"><input type="checkbox" name="aceite" required><span>Autorizo o contato da Veiga Projetos Estruturais com os dados informados.</span></label>
+          <label class="aceite"><input type="checkbox" name="aceite" required><span>Autorizo o contato da Veiga Projetos Estruturais com os dados informados, conforme a <a href="privacidade.html" target="_blank">Política de Privacidade</a>.</span></label>
           <div class="erro" id="erro" role="alert"></div>
           <button class="bt bt-ouro bt-grande enviar" type="submit" id="enviar"><span>Enviar solicitação</span><i class="barra-envio" id="barra-envio"></i></button>
         </div>
@@ -145,7 +162,8 @@
 
   <footer class="rodape">
     <img src="img/brasao-sm.png" alt="">
-    <div><b>VEIGA</b> Projetos Estruturais<br><small><span data-campo="cnpj"></span> · <i data-campo="lema"></i></small></div>
+    <div><b>VEIGA</b> Projetos Estruturais<br><small>CNPJ <span data-campo="cnpj"></span> · <i data-campo="lema"></i></small></div>
+    <nav class="rodape-links" id="redes"><a href="privacidade.html">Política de Privacidade</a></nav>
   </footer>
 
   <a class="whats-flutua" data-whats href="#" target="_blank" rel="noopener" aria-label="Conversar no WhatsApp"><svg><use href="#c-whats"/></svg></a>
@@ -157,6 +175,9 @@
     <symbol id="c-email" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m4 7 8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
     <symbol id="c-local" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="9.5" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
     <symbol id="c-doc" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="c-insta" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="c-linkedin" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V16M8 7.8v.1M11.5 16v-5.5M11.5 13c0-1.8 1-2.6 2.2-2.6s2.1.8 2.1 2.6V16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="c-mais" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="c-clipe" viewBox="0 0 24 24"><path d="M20 11.5 12.5 19a5 5 0 0 1-7-7l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4L15 7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
     <symbol id="s0" viewBox="0 0 24 24"><path d="M4 20h16M6 20V8l6-4 6 4v12M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
     <symbol id="s1" viewBox="0 0 24 24"><path d="M3 6h18M3 18h18M6 6l6 12 6-12M6 18 12 6l6 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>

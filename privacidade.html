@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade | Veiga Projetos Estruturais</title>
+  <meta name="description" content="Como a Veiga Projetos Estruturais trata os dados enviados pelo formulário de orçamento (LGPD).">
+  <meta name="theme-color" content="#27525A">
+  <link rel="icon" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="clientes.css">
+  <style>
+    .cab { background: var(--petroleo-escuro); position: sticky; }
+    .politica { max-width: 780px; margin: 0 auto; padding: 60px 24px 90px; }
+    .politica h1 { font-family: var(--serifa); color: var(--petroleo-escuro); font-size: clamp(28px, 4vw, 38px); margin-bottom: 8px; }
+    .politica h2 { font-family: var(--sans); font-size: 19px; letter-spacing: 0; margin: 34px 0 10px; color: var(--petroleo); }
+    .politica p, .politica li { color: var(--tinta-2); }
+    .politica ul { padding-left: 20px; }
+    .politica .atual { color: var(--tinta-3); font-size: 14px; }
+    .politica a { color: var(--petroleo); font-weight: 600; }
+    .politica .caixa-dados { background: var(--creme); border-left: 3px solid var(--ouro); border-radius: 0 10px 10px 0; padding: 16px 20px; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <header class="cab solido">
+    <a class="cab-marca" href="./"><img src="img/brasao-sm.png" alt=""><span><b>VEIGA</b><small>Projetos Estruturais</small></span></a>
+    <nav class="cab-nav" style="transform:none;position:static;background:none;box-shadow:none;padding:0"><a class="bt bt-ouro" href="./#orcamento" data-voltar>Voltar ao site</a></nav>
+  </header>
+  <main class="politica">
+    <h1>Política de Privacidade</h1>
+    <p class="atual">Última atualização: 26 de setembro de 2026</p>
+    <p>Esta política explica como a <b data-campo="nome"></b> trata os dados pessoais que você envia pela nossa página, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</p>
+
+    <h2>1. Quem é o responsável pelos seus dados</h2>
+    <div class="caixa-dados">
+      <b data-campo="nome"></b><br>
+      <span data-campo="razaoSocial"></span> · CNPJ <span data-campo="cnpj"></span><br>
+      Responsável: <span data-campo="responsavel"></span><br>
+      Contato: <a data-email href="#"><span data-campo="email"></span></a> · <span data-campo="telefone"></span>
+    </div>
+
+    <h2>2. Quais dados coletamos</h2>
+    <p>Somente o que você informa no formulário de orçamento: nome, empresa, telefone/WhatsApp, e-mail, cidade da obra, tipo de projeto, área aproximada, prazo desejado, a mensagem e os arquivos que você anexar (por exemplo, projeto de arquitetura, fotos ou sondagem).</p>
+    <p>Não usamos cookies de rastreamento, anúncios nem ferramentas de análise de visitas. A página carrega as fontes do Google Fonts, e a hospedagem (GitHub Pages) pode registrar dados técnicos de acesso, como o endereço IP, para fins de segurança.</p>
+
+    <h2>3. Para que usamos</h2>
+    <ul>
+      <li>Responder ao seu contato e elaborar a proposta de orçamento;</li>
+      <li>Caso você contrate o serviço, desenvolver e entregar o projeto;</li>
+      <li>Cumprir obrigações legais e regulatórias da atividade de engenharia.</li>
+    </ul>
+    <p>As bases legais são o seu consentimento (art. 7º, I) e a execução de procedimentos preliminares a um contrato, a seu pedido (art. 7º, V, da LGPD).</p>
+
+    <h2>4. Com quem compartilhamos</h2>
+    <p>Não vendemos nem cedemos seus dados. Quando você escolhe enviar o pedido pelo WhatsApp ou por e-mail, a mensagem trafega por esses serviços e fica sujeita também às políticas deles.</p>
+
+    <h2>5. Por quanto tempo guardamos</h2>
+    <p>Pelo tempo necessário para o atendimento e, se houver contratação, pelo prazo exigido para a guarda da documentação técnica do projeto. Pedidos que não resultaram em contratação podem ser excluídos a qualquer momento, a seu pedido.</p>
+
+    <h2>6. Seus direitos</h2>
+    <p>Você pode, a qualquer momento, pedir para confirmar se tratamos seus dados, acessá-los, corrigi-los, excluí-los ou revogar o consentimento (art. 18 da LGPD). Basta escrever para <a data-email href="#"><span data-campo="email"></span></a>.</p>
+
+    <h2>7. Alterações</h2>
+    <p>Esta política pode ser atualizada. A data da última versão fica sempre no topo desta página.</p>
+  </main>
+  <footer class="rodape"><img src="img/brasao-sm.png" alt=""><div><b>VEIGA</b> Projetos Estruturais</div></footer>
+  <script>
+    (async () => {
+      let e = {}, local = false;
+      for (const url of ['/api/publico', 'empresa.json']) {
+        try { const r = await fetch(url); if (r.ok) { const j = await r.json(); e = j.empresa || j; local = !!j.empresa; break; } } catch { /* tenta o próximo */ }
+      }
+      e = Object.assign({ nome: 'Veiga Projetos Estruturais', cnpj: '68.149.546/0001-42', responsavel: 'Eng. Marcos Eduardo de Souza Veiga',
+        email: 'marcos.eduardo108@gmail.com', telefone: '+55 62 99114-7338', razaoSocial: '' }, e);
+      document.querySelectorAll('[data-campo]').forEach(el => (el.textContent = e[el.dataset.campo] || ''));
+      document.querySelectorAll('[data-email]').forEach(a => (a.href = 'mailto:' + e.email + '?subject=' + encodeURIComponent('Privacidade — meus dados')));
+      if (local)  // no computador a página dos clientes fica em /clientes
+        document.querySelectorAll('[data-voltar], .cab-marca').forEach(a => (a.href = '/clientes' + (a.dataset.voltar !== undefined ? '#orcamento' : '')));
+    })();
+  </script>
+</body>
+</html>

@@ -33,8 +33,47 @@ function preencher() {
   $('#servicos-lista').innerHTML = (E.servicos || []).map((s, i) =>
     `<div class="servico revelar" style="--d:${(i % 3) * 0.1}s"><div class="ic"><svg><use href="#s${i % 6}"/></svg></div><h3>${esc(s)}</h3></div>`).join('');
   $('#tipo').insertAdjacentHTML('beforeend', [...(E.servicos || []), 'Outro'].map(s => `<option>${esc(s)}</option>`).join(''));
+  // perguntas frequentes (sanfona)
+  const faq = E.faq || [];
+  $('#duvidas').hidden = !faq.length;
+  $('#faq').innerHTML = faq.map((f, i) => `<div class="faq-item revelar" style="--d:${i * 0.06}s">
+      <button class="faq-p" aria-expanded="false" aria-controls="faq-r${i}" id="faq-p${i}">${esc(f.p)}<span class="faq-ic"><svg><use href="#c-mais"/></svg></span></button>
+      <div class="faq-r" id="faq-r${i}" role="region" aria-labelledby="faq-p${i}"><div><p>${esc(f.r)}</p></div></div>
+    </div>`).join('');
+  // redes sociais (aparecem só se preenchidas em Configurações)
+  const redes = [['instagram', 'Instagram', 'c-insta'], ['linkedin', 'LinkedIn', 'c-linkedin']]
+    .filter(([k]) => E[k]).map(([k, n, ic]) => `<a href="${esc(urlRede(k, E[k]))}" target="_blank" rel="noopener" aria-label="${n}"><svg><use href="#${ic}"/></svg>${n}</a>`).join('');
+  $('#redes').insertAdjacentHTML('afterbegin', redes);
+  dadosEstruturados();
   observarRevelar();
 }
+function urlRede(rede, v) {
+  if (/^https?:\/\//.test(v)) return v;
+  v = v.replace(/^@/, '');
+  return rede === 'instagram' ? `https://instagram.com/${v}` : `https://www.linkedin.com/in/${v}`;
+}
+// Dados estruturados (schema.org) — ajudam o Google a mostrar nome, telefone e endereço da empresa
+function dadosEstruturados() {
+  const [cidade, uf] = (E.cidade || '').split(/\s*[–-]\s*/);
+  const ld = {
+    '@context': 'https://schema.org', '@type': 'ProfessionalService', name: E.nome,
+    description: 'Projetos estruturais em concreto armado, estruturas metálicas, fundações, reforços e laudos.',
+    url: location.href.split('#')[0], image: new URL('img/brasao.png', location.href.replace(/clientes$/, '')).href,
+    telephone: E.telefone, email: E.email, taxID: E.cnpj, slogan: E.lema,
+    address: { '@type': 'PostalAddress', streetAddress: E.endereco, addressLocality: cidade, addressRegion: uf, postalCode: E.cep, addressCountry: 'BR' },
+    areaServed: 'BR', knowsAbout: E.servicos,
+    sameAs: ['instagram', 'linkedin'].filter(k => E[k]).map(k => urlRede(k, E[k])),
+  };
+  const s = document.createElement('script');
+  s.type = 'application/ld+json'; s.textContent = JSON.stringify(ld);
+  document.head.appendChild(s);
+}
+$('#faq').addEventListener('click', e => {
+  const b = e.target.closest('.faq-p'); if (!b) return;
+  const aberto = b.getAttribute('aria-expanded') === 'true';
+  b.setAttribute('aria-expanded', String(!aberto));
+  b.parentElement.classList.toggle('aberto', !aberto);
+});
 
 /* ---------- animações */
 function tituloAnimado() {
@@ -72,8 +111,13 @@ function aoRolar() {
 }
 
 /* ---------- menu móvel */
-$('#cab-menu').addEventListener('click', () => { $('#cab-menu').classList.toggle('aberto'); $('#cab-nav').classList.toggle('aberta'); });
-$$('#cab-nav a').forEach(a => a.addEventListener('click', () => { $('#cab-menu').classList.remove('aberto'); $('#cab-nav').classList.remove('aberta'); }));
+function menuMovel(abrir) {
+  $('#cab-menu').classList.toggle('aberto', abrir); $('#cab-nav').classList.toggle('aberta', abrir);
+  $('#cab-menu').setAttribute('aria-expanded', String(abrir));
+}
+$('#cab-menu').addEventListener('click', () => menuMovel(!$('#cab-nav').classList.contains('aberta')));
+$$('#cab-nav a').forEach(a => a.addEventListener('click', () => menuMovel(false)));
+addEventListener('keydown', e => { if (e.key === 'Escape') menuMovel(false); });
 
 /* ---------- formulário */
 const arquivos = [];

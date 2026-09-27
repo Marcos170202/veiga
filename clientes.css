@@ -154,6 +154,29 @@ blockquote small { color: var(--tinta-3); font-style: italic; }
 .check path { fill: none; stroke: var(--petroleo); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: tracar .45s var(--suave) forwards .55s; }
 @keyframes tracar { to { stroke-dashoffset: 0; } }
 
+/* perguntas frequentes */
+.duvidas { display: grid; grid-template-columns: .8fr 1.2fr; gap: 56px; align-items: start; }
+.duvidas-sub { color: var(--tinta-2); margin: 16px 0 0; }
+.duvidas-sub a { color: var(--petroleo); font-weight: 600; }
+.faq { display: grid; gap: 10px; }
+.faq-item { background: var(--papel); border: 1px solid var(--linha); border-radius: 12px; transition: border-color .3s, box-shadow .3s; }
+.faq-item.aberto { border-color: var(--ouro); box-shadow: 0 10px 26px rgba(39,82,90,.08); }
+.faq-p { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 20px; background: none; border: 0; font: inherit; font-weight: 600; font-size: 16px; color: var(--petroleo-escuro); text-align: left; cursor: pointer; }
+.faq-ic { width: 30px; height: 30px; border-radius: 50%; background: var(--creme); display: grid; place-items: center; flex: none; color: var(--ouro-texto); transition: transform .4s var(--suave), background .3s, color .3s; }
+.faq-ic svg { width: 16px; height: 16px; }
+.faq-item.aberto .faq-ic { transform: rotate(45deg); background: var(--petroleo); color: var(--ouro); }
+.faq-r { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--suave); }
+.faq-r > div { overflow: hidden; }
+.faq-r p { margin: 0; padding: 0 20px 18px; color: var(--tinta-2); opacity: 0; transform: translateY(-6px); transition: opacity .35s, transform .35s var(--suave); }
+.faq-item.aberto .faq-r { grid-template-rows: 1fr; }
+.faq-item.aberto .faq-r p { opacity: 1; transform: none; transition-delay: .1s; }
+
+/* acessibilidade */
+.pular { position: fixed; left: 16px; top: -60px; z-index: 50; background: var(--ouro); color: var(--petroleo-escuro); padding: 10px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; transition: top .2s; }
+.pular:focus { top: 16px; }
+:focus-visible { outline: 3px solid var(--ouro); outline-offset: 3px; border-radius: 6px; }
+.aceite a { color: var(--petroleo); font-weight: 600; }
+
 .contatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; }
 .contato { display: flex; gap: 14px; align-items: center; padding: 20px; border-radius: 14px; border: 1px solid var(--linha); background: var(--papel); text-decoration: none; color: inherit; transition: transform .35s var(--suave), box-shadow .35s, border-color .35s; min-width: 0; }
 a.contato:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(39,82,90,.12); border-color: var(--ouro); }
@@ -165,7 +188,12 @@ a.contato:hover .ic { transform: scale(1.1) rotate(-8deg); }
 .contato span { font-size: 13.5px; color: var(--tinta-3); }
 
 .rodape { background: var(--petroleo-escuro); color: rgba(251,243,230,.75); display: flex; gap: 16px; align-items: center; justify-content: center; padding: 30px 24px; font-size: 14px; border-top: 3px solid var(--ouro); }
+.rodape { flex-wrap: wrap; }
 .rodape img { width: 44px; }
+.rodape-links { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-left: 24px; }
+.rodape-links a { color: var(--ouro-claro); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; transition: color .2s; }
+.rodape-links a:hover { color: #fff; }
+.rodape-links svg { width: 18px; height: 18px; }
 .rodape b { font-family: var(--serifa); color: var(--ouro); letter-spacing: .14em; }
 .whats-flutua { position: fixed; right: 22px; bottom: 22px; z-index: 30; width: 58px; height: 58px; border-radius: 50%; background: #25A366; color: #fff; display: grid; place-items: center; box-shadow: 0 10px 26px rgba(0,0,0,.25); transition: transform .3s var(--suave); animation: entrarWhats .6s var(--suave) both 1.5s; }
 .whats-flutua svg { width: 30px; height: 30px; }
@@ -186,7 +214,9 @@ a.contato:hover .ic { transform: scale(1.1) rotate(-8deg); }
   .cab-nav.aberta { transform: none; }
   .cab-nav a:not(.bt) { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
   .cab-nav .bt { margin-top: 14px; justify-content: center; }
-  .hero-conteudo, .sobre, .orc { grid-template-columns: 1fr; }
+  .hero-conteudo, .sobre, .orc, .duvidas { grid-template-columns: 1fr; gap: 30px; }
+  .rodape-links { margin-left: 0; width: 100%; }
+  .rodape { text-align: center; }
   .hero-brasao { width: 200px; grid-row: 1; }
   .hero { text-align: center; }
   .hero p { margin-left: auto; margin-right: auto; }

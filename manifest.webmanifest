@@ -1,0 +1,28 @@
+{
+  "name": "Veiga Projetos Estruturais",
+  "short_name": "Veiga",
+  "description": "Projetos estruturais — solicite seu orçamento",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1B3C42",
+  "theme_color": "#27525A",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "img/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "img/brasao-sm.png",
+      "sizes": "130x160",
+      "type": "image/png"
+    },
+    {
+      "src": "img/brasao.png",
+      "sizes": "487x600",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

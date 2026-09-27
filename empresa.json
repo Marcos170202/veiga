@@ -1,6 +1,7 @@
 {
   "nome": "Veiga Projetos Estruturais",
   "lema": "Christus Angularis",
+  "razaoSocial": "68.149.546 MARCOS EDUARDO DE SOUZA VEIGA",
   "cnpj": "68.149.546/0001-42",
   "responsavel": "Eng. Marcos Eduardo de Souza Veiga",
   "telefone": "+55 62 99114-7338",
@@ -16,5 +17,33 @@
     "Reforço e recuperação estrutural",
     "Laudos, inspeções e pareceres técnicos",
     "Compatibilização e modelagem BIM (IFC)"
-  ]
+  ],
+  "faq": [
+    {
+      "p": "Quanto custa um projeto estrutural?",
+      "r": "O valor depende da área, do tipo de estrutura e da complexidade da obra. Envie a arquitetura pelo formulário e preparamos uma proposta sem compromisso, com valor e prazo."
+    },
+    {
+      "p": "Quais documentos preciso enviar?",
+      "r": "O principal é o projeto de arquitetura (plantas, cortes e fachadas). Sondagem do terreno (SPT) e levantamento topográfico, quando existirem, também ajudam. Se ainda não tiver algum deles, orientamos o que é necessário."
+    },
+    {
+      "p": "O projeto é entregue com ART?",
+      "r": "Sim. O projeto é entregue com a ART (Anotação de Responsabilidade Técnica) do engenheiro responsável."
+    },
+    {
+      "p": "Qual é o prazo de entrega?",
+      "r": "Depende do porte e da complexidade da obra. O prazo é informado na proposta, junto com o valor."
+    },
+    {
+      "p": "O projeto é compatibilizado com a arquitetura e as instalações?",
+      "r": "Sim. A estrutura é modelada e compatibilizada com a arquitetura e os projetos complementares, inclusive com troca de modelos IFC quando disponíveis."
+    },
+    {
+      "p": "Vocês atendem obras em outras cidades?",
+      "r": "Sim. O projeto é desenvolvido a partir dos documentos enviados e o acompanhamento é feito on-line."
+    }
+  ],
+  "instagram": "",
+  "linkedin": ""
 }
