@@ -15,7 +15,9 @@ FC.agentes.analista = (() => {
       const t = T().totais(m, conta);
       out.push({ ym: m, receitas: t.receitas, despesas: t.despesas, saldo: t.saldo });
     }
-    return out;
+    // não mostra os meses vazios antes do primeiro lançamento (mantém ao menos 3 pontos)
+    const primeiro = out.findIndex((x) => x.receitas || x.despesas);
+    return primeiro > 0 ? out.slice(Math.min(primeiro, out.length - 3)) : out;
   }
 
   function porCategoria(ym, conta) {

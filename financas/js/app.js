@@ -256,6 +256,7 @@
           vencimento: tr.querySelector('.r-venc').value || r.vencimento,
           status: tr.querySelector('.r-status').value,
           valor: U.parseValor(tr.querySelector('.r-valor').value),
+          tipo: tr.querySelector('.r-tipo').value,
         }),
         original: r,
       };

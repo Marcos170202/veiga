@@ -227,15 +227,16 @@ FC.telas = (() => {
         <header><h3>Revisão</h3><span class="sub">${r.length ? `${r.length} item(ns) — confira e ajuste antes de lançar` : 'os itens lidos aparecem aqui'}</span>
           ${r.length ? '<button class="btn" data-acao="descartar-rascunhos">Descartar</button><button class="btn btn-p" data-acao="lancar-rascunhos">Lançar selecionados</button>' : ''}</header>
         ${r.length ? `<div class="tabela-envolve"><table class="tabela">
-          <thead><tr><th style="width:28px"></th><th>Arquivo</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Vencimento</th><th>Status</th><th class="num">Valor</th></tr></thead>
-          <tbody>${r.map((x, i) => `<tr data-i="${i}">
-            <td><input type="checkbox" class="r-incluir" ${x.duplicado ? '' : 'checked'}></td>
-            <td style="max-width:160px"><span class="muted" style="font-size:12px;word-break:break-all">${e(x.arquivo || 'texto colado')}</span><br><span class="etq ${x.origem === 'ia' ? 'etq-ia' : ''}">${e(x.docTipo || '')}</span>${x.duplicado ? '<br><span class="st st-atrasado" style="cursor:default">já lançado?</span>' : ''}</td>
+          <thead><tr><th style="width:28px"></th><th>Arquivo</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Data</th><th>Status</th><th>Tipo</th><th class="num">Valor</th></tr></thead>
+          <tbody>${r.map((x, i) => `<tr data-i="${i}" ${x.interno ? 'style="opacity:.6"' : ''}>
+            <td><input type="checkbox" class="r-incluir" ${x.duplicado || x.interno ? '' : 'checked'}></td>
+            <td style="max-width:160px"><span class="muted" style="font-size:12px;word-break:break-all">${e(x.arquivo || 'texto colado')}</span><br><span class="etq ${x.origem === 'ia' ? 'etq-ia' : ''}">${e(x.docTipo || '')}</span>${x.duplicado ? '<br><span class="st st-atrasado" style="cursor:default">já lançado?</span>' : ''}${x.interno ? '<br><span class="etq">entre contas</span>' : ''}</td>
             <td><input class="r-desc" value="${e(x.descricao)}" style="width:100%;min-width:150px"><br><span class="conf ${x.confiancaExtracao < 0.5 ? 'baixa' : ''}" title="Confiança na leitura"><i style="--c:${Math.round((x.confiancaExtracao || 0) * 100)}%"></i>leitura ${Math.round((x.confiancaExtracao || 0) * 100)}%</span>${x.linhaDigitavel ? ' <span class="etq">boleto</span>' : ''}${x.parcela ? ` <span class="etq">${x.parcela.n}/${x.parcela.total}</span>` : ''}</td>
             <td><select class="r-cat">${opcoesCategorias(x.categoriaId)}</select><br><span class="conf ${x.confianca < 0.5 ? 'baixa' : ''}" title="${e(x.motivo || '')}"><i style="--c:${Math.round((x.confianca || 0) * 100)}%"></i>${e(x.motivo || '')}</span></td>
             <td><select class="r-conta">${opcoesContas(x.conta)}</select></td>
             <td><input type="date" class="r-venc" value="${x.vencimento}"></td>
             <td><select class="r-status"><option value="pendente" ${x.status !== 'pago' ? 'selected' : ''}>a pagar</option><option value="pago" ${x.status === 'pago' ? 'selected' : ''}>pago</option></select></td>
+            <td><select class="r-tipo"><option value="despesa" ${x.tipo !== 'receita' ? 'selected' : ''}>saída</option><option value="receita" ${x.tipo === 'receita' ? 'selected' : ''}>entrada</option></select></td>
             <td class="num"><input class="r-valor" value="${x.valor.toFixed(2).replace('.', ',')}" style="width:100px;text-align:right"></td>
           </tr>`).join('')}</tbody></table></div>` : '<p class="vazio">Envie um arquivo para começar. Dica: boletos em PDF já trazem valor e vencimento na linha digitável.</p>'}
       </section>`;

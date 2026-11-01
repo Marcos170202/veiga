@@ -45,6 +45,10 @@ FC.orquestrador = (() => {
       if (lido.tipo === 'csv' || lido.tipo === 'ofx') {
         etapas('extrator');
         rascunhos = FC.agentes.extrator.extrairExtrato(lido);
+      } else if (lido.tipo === 'pdf' && FC.agentes.extrator.pareceExtrato(lido.texto || '')) {
+        // extrato bancário em PDF: uma linha por movimentação, lido localmente
+        etapas('extrator');
+        rascunhos = FC.agentes.extrator.extrairExtratoPDF(lido.texto, file.name);
       } else {
         const iaPronta = FC.agentes.ia.disponivel();
         const precisaIA = !lido.texto || lido.texto.trim().length < 25;
@@ -68,8 +72,10 @@ FC.orquestrador = (() => {
 
       etapas('classificador');
       rascunhos = rascunhos.map((r) => {
-        const c = r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: 'sugerido pela IA' }
-          : FC.agentes.classificador.classificar(r);
+        const c = r.interno
+          ? { categoriaId: r.tipo === 'despesa' ? 'investimentos' : 'extra', confianca: 0.9, motivo: 'entre suas contas — fica de fora' }
+          : r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: 'sugerido pela IA' }
+            : FC.agentes.classificador.classificar(r);
         return Object.assign({
           id: FC.util.uid(),
           tipo: 'despesa',
