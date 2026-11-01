@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#2b3524">
+  <title>Caderneta · finanças da casa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="lateral">
+      <div class="marca">
+        <h1>Caderneta</h1>
+        <p>finanças da casa</p>
+      </div>
+      <nav class="nav" id="nav" aria-label="Abas"></nav>
+      <div class="lateral-rodape">Dados salvos só neste navegador.<br>Atalho: <kbd>N</kbd> novo lançamento.</div>
+    </aside>
+    <main class="principal">
+      <header class="topo" id="topo"></header>
+      <div class="conteudo" id="conteudo"></div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- núcleo -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/agentes.js"></script>
+  <!-- agentes: cada um cuida de uma parte -->
+  <script src="js/agents/leitor.js"></script>
+  <script src="js/agents/extrator.js"></script>
+  <script src="js/agents/classificador.js"></script>
+  <script src="js/agents/ia.js"></script>
+  <script src="js/agents/tesoureiro.js"></script>
+  <script src="js/agents/planejador.js"></script>
+  <script src="js/agents/divisor.js"></script>
+  <script src="js/agents/sentinela.js"></script>
+  <script src="js/agents/analista.js"></script>
+  <script src="js/agents/arquivista.js"></script>
+  <!-- interface -->
+  <script src="js/ui/graficos.js"></script>
+  <script src="js/ui/telas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
