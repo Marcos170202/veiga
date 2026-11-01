@@ -53,7 +53,10 @@
       <h2>${aba.nome}<small>${aba.sub}</small></h2>
       ${comConta ? `<div class="segmentado" role="group" aria-label="Conta">${[['todas', 'Tudo'], ['casal', 'Conjunta'], ['a', p.a], ['b', p.b]].map(([v, n]) => `<button data-acao="conta" data-conta="${v}" class="${ui.conta === v ? 'ativo' : ''}">${U.esc(n)}</button>`).join('')}</div>` : ''}
       ${comMes ? `<div class="seletor-mes"><button data-acao="mes" data-d="-1" aria-label="Mês anterior">‹</button><span>${U.mesLabel(ui.ym)}</span><button data-acao="mes" data-d="1" aria-label="Próximo mês">›</button></div>` : ''}
+      ${U.noClaude ? `<span class="nuvem nuvem-${FC.nuvem.estado}" title="Onde seus dados estão salvos">${{ nuvem: 'Salvo na nuvem', conectando: 'Conectando…', offline: 'Só neste navegador', local: 'Neste navegador' }[FC.nuvem.estado]}</span>` : ''}
       <div class="linha-acoes"><button class="btn btn-p" data-acao="novo">+ Novo lançamento</button></div>`;
+    const rodape = document.querySelector('.lateral-rodape');
+    if (rodape) rodape.innerHTML = `${FC.nuvem.estado === 'nuvem' ? 'Dados salvos na nuvem do claude.ai.' : 'Dados salvos só neste navegador.'}<br>Atalho: <kbd>N</kbd> novo lançamento.`;
   }
 
   let telaAtual = null;
@@ -99,6 +102,17 @@
     const primeiro = fundo.querySelector('input, select, textarea');
     if (primeiro) primeiro.focus();
     return { el: fundo, fechar };
+  }
+
+  /* Confirmação dentro da própria página (o claude.ai bloqueia as caixas de diálogo do navegador). */
+  function confirmar(msg, rotulo = 'Confirmar') {
+    return new Promise((ok) => {
+      const m = modal('Confirmar', `<p style="margin:0;font-size:14.5px">${U.esc(msg)}</p>`,
+        `<button class="btn" data-fechar>Cancelar</button><button class="btn btn-p" data-sim>${U.esc(rotulo)}</button>`);
+      let respondeu = false;
+      m.el.querySelector('[data-sim]').addEventListener('click', () => { respondeu = true; m.fechar(); ok(true); });
+      new MutationObserver((_, obs) => { if (!m.el.isConnected) { obs.disconnect(); if (!respondeu) ok(false); } }).observe(document.body, { childList: true });
+    });
   }
 
   /* ---------- formulário de lançamento ---------- */
@@ -164,7 +178,7 @@
       m.fechar();
     });
     const del = f.querySelector('[data-del]');
-    if (del) del.addEventListener('click', () => { if (confirm(`Excluir "${l.descricao}"?`)) { A.tesoureiro.remover(l.id); m.fechar(); toast('Excluído.'); } });
+    if (del) del.addEventListener('click', async () => { m.fechar(); if (await confirmar(`Excluir "${l.descricao}"?`, 'Excluir')) { A.tesoureiro.remover(l.id); toast('Excluído.'); } });
   }
 
   function formMeta(meta) {
@@ -289,7 +303,7 @@
     pagar: (el) => { A.tesoureiro.marcarPagos([el.dataset.id]); toast('Conta marcada como paga.'); },
     'sel-todos': (el) => { document.querySelectorAll('.sel').forEach((c) => { c.checked = el.checked; }); selecao(); },
     'pagar-selecionados': () => { A.tesoureiro.marcarPagos(selecionados()); toast('Contas marcadas como pagas.'); },
-    'excluir-selecionados': () => { const ids = selecionados(); if (confirm(`Excluir ${ids.length} lançamento(s)?`)) ids.forEach((id) => A.tesoureiro.remover(id)); },
+    'excluir-selecionados': async () => { const ids = selecionados(); if (await confirmar(`Excluir ${ids.length} lançamento(s)?`, 'Excluir')) ids.forEach((id) => A.tesoureiro.remover(id)); },
     'exportar-csv': () => A.arquivista.exportarCSV(telaAtual.lista || [], `lancamentos-${ui.ym}.csv`),
     'exportar-tudo': () => A.arquivista.exportarCSV(st().lancamentos.slice().sort((a, b) => (a.data < b.data ? -1 : 1)), `lancamentos-completo-${U.hoje()}.csv`),
     'exportar-ano': () => {
@@ -336,8 +350,8 @@
     retirar: (el) => formAporte(el.dataset.id, true),
     'nova-meta': () => formMeta(),
     'editar-meta': (el) => formMeta(st().metas.find((m) => m.id === el.dataset.id)),
-    'excluir-meta': (el) => { const m = st().metas.find((x) => x.id === el.dataset.id); if (confirm(`Excluir a meta "${m.nome}"?`)) { st().metas = st().metas.filter((x) => x !== m); FC.store.salvar(); } },
-    'baixar-resumo': () => U.baixar(`resumo-${ui.ym}.txt`, A.analista.relatorioTexto(ui.ym)),
+    'excluir-meta': async (el) => { const m = st().metas.find((x) => x.id === el.dataset.id); if (await confirmar(`Excluir a meta "${m.nome}"?`, 'Excluir')) { st().metas = st().metas.filter((x) => x !== m); FC.store.salvar(); } },
+    'baixar-resumo': () => A.arquivista.baixar(`resumo-${ui.ym}.txt`, A.analista.relatorioTexto(ui.ym)),
     imprimir: () => window.print(),
     'salvar-categorias': () => {
       document.querySelectorAll('tr[data-cat]').forEach((tr) => {
@@ -356,10 +370,10 @@
       st().categorias.push({ id, nome, grupo: document.getElementById('nova-cat-grupo').value, orcamento: Number(document.getElementById('nova-cat-orc').value) || 0 });
       FC.store.salvar(); O.log('classificador', `Nova categoria "${nome}" — passo a reconhecê-la pelo nome.`); toast('Categoria criada.');
     },
-    'excluir-categoria': (el) => {
+    'excluir-categoria': async (el) => {
       const c = FC.store.categoria(el.dataset.id);
       const usos = st().lancamentos.filter((l) => l.categoriaId === c.id).length;
-      if (!confirm(`Excluir "${c.nome}"?${usos ? ` Os ${usos} lançamento(s) dela vão para "Outros".` : ''}`)) return;
+      if (!await confirmar(`Excluir "${c.nome}"?${usos ? ` Os ${usos} lançamento(s) dela vão para "Outros".` : ''}`, 'Excluir')) return;
       st().lancamentos.forEach((l) => { if (l.categoriaId === c.id) l.categoriaId = c.grupo === 'receita' ? 'extra' : 'outros'; });
       st().categorias = st().categorias.filter((x) => x.id !== c.id);
       st().regras = st().regras.filter((g) => g.categoriaId !== c.id);
@@ -375,15 +389,15 @@
       FC.store.salvar(); O.log('ia', st().config.ia.apiKey ? `Ligado com o modelo ${st().config.ia.modelo}.` : 'Desligado (sem chave).'); toast('Configuração da IA salva.');
     },
     'testar-ia': async (el) => {
-      acoes['salvar-ia']();
+      if (!U.noClaude) acoes['salvar-ia']();
       el.disabled = true; el.textContent = 'Testando…';
-      try { await A.ia.testar(); toast('Conexão OK — o Analista IA está pronto.'); } catch (err) { O.log('ia', `Falha no teste: ${err.message}`, 'erro'); toast('Falhou: ' + err.message); }
+      try { await A.ia.testar(); toast('Conexão OK: o Claude está pronto.'); } catch (err) { const msg = A.ia.explicarErro(err); O.log('ia', `Falha no teste: ${msg}`, 'erro'); toast('Falhou: ' + msg); render(); }
       el.disabled = false; el.textContent = 'Testar conexão';
     },
     backup: () => A.arquivista.backup(),
-    'carregar-exemplo': () => { if (confirm('Substituir tudo pelos dados de exemplo?')) { FC.store.resetarDemo(); toast('Dados de exemplo carregados.'); } },
-    zerar: () => {
-      if (!confirm('Apagar todos os lançamentos, metas e o diário? Categorias, orçamentos e ajustes continuam. Faça um backup antes se quiser.')) return;
+    'carregar-exemplo': async () => { if (await confirmar('Substituir tudo pelos dados de exemplo?', 'Substituir')) { FC.store.resetarDemo(); toast('Dados de exemplo carregados.'); } },
+    zerar: async () => {
+      if (!await confirmar('Apagar todos os lançamentos, metas e o diário? Categorias, orçamentos e ajustes continuam. Faça um backup antes se quiser.', 'Apagar tudo')) return;
       const s = st();
       s.lancamentos = []; s.diario = []; s.acertos = []; s.demo = false;
       s.metas = [{ id: 'reserva', nome: 'Reserva de emergência', alvo: 0, guardado: 0, prazo: '', especial: true }];
@@ -444,4 +458,16 @@
   A.sentinela.varredura(mesAtual);
   if (geradas) O.log('tesoureiro', `Contas fixas de ${U.mesLabel(mesAtual)} já estão na lista de contas a pagar.`);
   render();
+
+  if (U.noClaude) {
+    FC.nuvem.aoMudar(() => render());
+    FC.nuvem.iniciar().then((ok) => {
+      if (ok) {
+        const n = A.tesoureiro.gerarRecorrentes(mesAtual);
+        O.log('arquivista', `Dados carregados da nuvem: ${st().lancamentos.length} lançamento(s)${n ? `, ${n} recorrente(s) do mês criadas` : ''}.`);
+      }
+      render();
+    });
+    A.ia.iniciar();
+  }
 })();

@@ -95,6 +95,7 @@ FC.graficos = (() => {
 
   /* ---------- linhas (receitas x despesas por mês) com mira e tooltip ---------- */
   function linhas(el, pontos, series) {
+    if (!pontos.some((p) => series.some((s) => p[s.chave]))) { el.innerHTML = '<p class="vazio">O gráfico aparece quando houver lançamentos.</p>'; return; }
     const W = Math.max(320, el.clientWidth || 640), H = 240;
     const m = { t: 16, r: 74, b: 28, l: 56 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;

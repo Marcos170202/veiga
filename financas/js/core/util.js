@@ -2,6 +2,8 @@
 window.FC = window.FC || {};
 
 FC.util = (() => {
+  // aberto como página publicada no claude.ai? (lá existe window.claude.use)
+  const noClaude = !!(window.claude && typeof window.claude.use === 'function');
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const num = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
   const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',
@@ -11,6 +13,7 @@ FC.util = (() => {
   const pad = (n) => String(n).padStart(2, '0');
 
   return {
+    noClaude,
     MESES, MESES_CURTOS,
     uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     moeda: (v) => brl.format(Number(v) || 0),
@@ -63,7 +66,14 @@ FC.util = (() => {
     esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     },
-    baixar(nome, conteudo, tipo = 'text/plain') {
+    /* Dentro do claude.ai o download passa pela confirmação do próprio Claude. */
+    async baixar(nome, conteudo, tipo = 'text/plain') {
+      if (FC.util.noClaude) {
+        const dl = await window.claude.use('downloads');
+        if (!dl) throw new Error('download indisponível nesta visualização');
+        await dl.save({ filename: nome, data: conteudo });
+        return;
+      }
       const blob = conteudo instanceof Blob ? conteudo : new Blob([conteudo], { type: tipo });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);

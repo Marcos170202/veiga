@@ -15,12 +15,17 @@ FC.store = (() => {
     ['vestuario', 'Roupas e cuidados', 'pessoal', 350],
     ['pets', 'Pets', 'pessoal', 200],
     ['presentes', 'Presentes', 'pessoal', 150],
+    ['impostos', 'Impostos e taxas', 'essenciais', 0],
+    ['cartao', 'Fatura do cartão', 'pessoal', 0],
+    ['pessoas', 'Pix para pessoas', 'pessoal', 0],
+    ['doacoes', 'Doações e dízimo', 'pessoal', 0],
     ['outros', 'Outros', 'pessoal', 200],
     ['casamento', 'Casamento', 'metas', 4500],
     ['investimentos', 'Investimentos', 'metas', 0],
     ['salario', 'Salário', 'receita', 0],
     ['extra', 'Renda extra', 'receita', 0],
     ['reembolso', 'Reembolsos', 'receita', 0],
+    ['recebidos', 'Transferências recebidas', 'receita', 0],
   ].map(([id, nome, grupo, orcamento]) => ({ id, nome, grupo, orcamento }));
 
   function configPadrao() {
@@ -36,7 +41,7 @@ FC.store = (() => {
 
   function vazio() {
     return {
-      versao: 1,
+      versao: 2,
       demo: false,
       config: configPadrao(),
       categorias: JSON.parse(JSON.stringify(CATEGORIAS_PADRAO)),
@@ -136,12 +141,18 @@ FC.store = (() => {
     const bruto = localStorage.getItem(CHAVE);
     estado = bruto ? JSON.parse(bruto) : null;
   } catch (e) { estado = null; }
-  if (!estado) estado = demo();
+  // no claude.ai os dados vêm da nuvem: começa vazio em vez de mostrar o exemplo
+  if (!estado) estado = FC.util.noClaude ? vazio() : demo();
   // migrações leves: garante campos novos
   estado.config = Object.assign(configPadrao(), estado.config);
   estado.config.ia = Object.assign(configPadrao().ia, estado.config.ia);
   estado.diario = estado.diario || [];
   estado.regras = estado.regras || [];
+  if ((estado.versao || 1) < 2) {
+    // versão 2: novas categorias padrão (impostos, fatura, Pix para pessoas, doações, transferências recebidas)
+    CATEGORIAS_PADRAO.forEach((c) => { if (!estado.categorias.some((x) => x.id === c.id)) estado.categorias.push({ ...c }); });
+    estado.versao = 2;
+  }
 
   let timer;
   function salvar(notificar = true) {
@@ -149,6 +160,7 @@ FC.store = (() => {
     timer = setTimeout(() => {
       try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { console.warn('Não foi possível salvar', e); }
     }, 120);
+    if (FC.nuvem) FC.nuvem.agendar();
     if (notificar && FC.orquestrador) FC.orquestrador.emitir('mudou');
   }
 

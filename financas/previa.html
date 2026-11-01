@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#2b3524">
-  <title>Caderneta · finanças da casa</title>
+  <title>Caderneta da Casa</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -102,7 +102,7 @@ h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; letter-spacing:
 .topo {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   padding: 18px 32px; border-bottom: var(--borda); background: var(--bege-50);
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
 }
 .topo h2 { font-size: 24px; margin-right: auto; }
 .topo h2 small { display: block; font-family: var(--fonte); font-size: 12.5px; color: var(--tinta-3); font-weight: 400; letter-spacing: 0; }
@@ -116,6 +116,14 @@ h1, h2, h3 { font-family: var(--fonte-titulo); font-weight: 500; letter-spacing:
 .segmentado button { border: 0; background: none; padding: 5px 11px; border-radius: 6px; cursor: pointer; color: var(--tinta-2); font-size: 13px; }
 .segmentado button.ativo { background: var(--musgo-700); color: var(--bege-50); }
 
+.nuvem { font-size: 12px; padding: 4px 10px; border-radius: 20px; background: var(--bege-200); color: var(--tinta-2); white-space: nowrap; }
+.nuvem::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: var(--bege-400); vertical-align: 1px; }
+.nuvem-nuvem::before { background: var(--musgo-500); }
+.nuvem-conectando::before { background: #c48a12; animation: pulsa .7s infinite alternate; }
+.nuvem-offline::before { background: var(--critico); }
+.boas-vindas { display: flex; gap: 20px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--musgo-50); border-color: var(--musgo-200); }
+.boas-vindas h3 { font-size: 19px; margin-bottom: 4px; }
+.boas-vindas p { margin: 0; color: var(--tinta-2); max-width: 62ch; }
 .conteudo { padding: 26px 32px 60px; display: flex; flex-direction: column; gap: 20px; max-width: 1320px; width: 100%; }
 
 /* ---------- botões e campos ---------- */
@@ -443,6 +451,8 @@ ul.diario { list-style: none; padding: 0; margin: 0; }
 window.FC = window.FC || {};
 
 FC.util = (() => {
+  // aberto como página publicada no claude.ai? (lá existe window.claude.use)
+  const noClaude = !!(window.claude && typeof window.claude.use === 'function');
   const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   const num = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
   const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho',
@@ -452,6 +462,7 @@ FC.util = (() => {
   const pad = (n) => String(n).padStart(2, '0');
 
   return {
+    noClaude,
     MESES, MESES_CURTOS,
     uid: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
     moeda: (v) => brl.format(Number(v) || 0),
@@ -504,7 +515,14 @@ FC.util = (() => {
     esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     },
-    baixar(nome, conteudo, tipo = 'text/plain') {
+    /* Dentro do claude.ai o download passa pela confirmação do próprio Claude. */
+    async baixar(nome, conteudo, tipo = 'text/plain') {
+      if (FC.util.noClaude) {
+        const dl = await window.claude.use('downloads');
+        if (!dl) throw new Error('download indisponível nesta visualização');
+        await dl.save({ filename: nome, data: conteudo });
+        return;
+      }
       const blob = conteudo instanceof Blob ? conteudo : new Blob([conteudo], { type: tipo });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -555,12 +573,17 @@ FC.store = (() => {
     ['vestuario', 'Roupas e cuidados', 'pessoal', 350],
     ['pets', 'Pets', 'pessoal', 200],
     ['presentes', 'Presentes', 'pessoal', 150],
+    ['impostos', 'Impostos e taxas', 'essenciais', 0],
+    ['cartao', 'Fatura do cartão', 'pessoal', 0],
+    ['pessoas', 'Pix para pessoas', 'pessoal', 0],
+    ['doacoes', 'Doações e dízimo', 'pessoal', 0],
     ['outros', 'Outros', 'pessoal', 200],
     ['casamento', 'Casamento', 'metas', 4500],
     ['investimentos', 'Investimentos', 'metas', 0],
     ['salario', 'Salário', 'receita', 0],
     ['extra', 'Renda extra', 'receita', 0],
     ['reembolso', 'Reembolsos', 'receita', 0],
+    ['recebidos', 'Transferências recebidas', 'receita', 0],
   ].map(([id, nome, grupo, orcamento]) => ({ id, nome, grupo, orcamento }));
 
   function configPadrao() {
@@ -576,7 +599,7 @@ FC.store = (() => {
 
   function vazio() {
     return {
-      versao: 1,
+      versao: 2,
       demo: false,
       config: configPadrao(),
       categorias: JSON.parse(JSON.stringify(CATEGORIAS_PADRAO)),
@@ -676,12 +699,18 @@ FC.store = (() => {
     const bruto = localStorage.getItem(CHAVE);
     estado = bruto ? JSON.parse(bruto) : null;
   } catch (e) { estado = null; }
-  if (!estado) estado = demo();
+  // no claude.ai os dados vêm da nuvem: começa vazio em vez de mostrar o exemplo
+  if (!estado) estado = FC.util.noClaude ? vazio() : demo();
   // migrações leves: garante campos novos
   estado.config = Object.assign(configPadrao(), estado.config);
   estado.config.ia = Object.assign(configPadrao().ia, estado.config.ia);
   estado.diario = estado.diario || [];
   estado.regras = estado.regras || [];
+  if ((estado.versao || 1) < 2) {
+    // versão 2: novas categorias padrão (impostos, fatura, Pix para pessoas, doações, transferências recebidas)
+    CATEGORIAS_PADRAO.forEach((c) => { if (!estado.categorias.some((x) => x.id === c.id)) estado.categorias.push({ ...c }); });
+    estado.versao = 2;
+  }
 
   let timer;
   function salvar(notificar = true) {
@@ -689,6 +718,7 @@ FC.store = (() => {
     timer = setTimeout(() => {
       try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) { console.warn('Não foi possível salvar', e); }
     }, 120);
+    if (FC.nuvem) FC.nuvem.agendar();
     if (notificar && FC.orquestrador) FC.orquestrador.emitir('mudou');
   }
 
@@ -790,7 +820,7 @@ FC.orquestrador = (() => {
       rascunhos = rascunhos.map((r) => {
         const c = r.interno
           ? { categoriaId: r.tipo === 'despesa' ? 'investimentos' : 'extra', confianca: 0.9, motivo: 'entre suas contas — fica de fora' }
-          : r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: 'sugerido pela IA' }
+          : r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: r.motivo || 'sugerido pela IA' }
             : FC.agentes.classificador.classificar(r);
         return Object.assign({
           id: FC.util.uid(),
@@ -801,6 +831,13 @@ FC.orquestrador = (() => {
           arquivo: file.name,
         }, r, c);
       });
+
+      // extratos: o Claude revisa as categorias das linhas que o Classificador local não tinha certeza
+      const semIA = rascunhos.filter((r) => r.origem !== 'ia' && !r.interno);
+      if (opcoes.usarIA && semIA.length && FC.agentes.ia.disponivel()) {
+        etapas('ia');
+        await FC.agentes.ia.classificarLote(semIA);
+      }
 
       etapas('sentinela');
       rascunhos.forEach((r) => { r.duplicado = FC.agentes.sentinela.pareceDuplicado(r); });
@@ -817,6 +854,149 @@ FC.orquestrador = (() => {
 })();
 
 FC.agentes = {};
+
+</script>
+  <script>
+/*
+ * Nuvem — quando o app está publicado no claude.ai, os dados ficam guardados lá
+ * (banco da própria página), e não só no navegador. Funciona em qualquer aparelho
+ * em que você abrir o link, e em tempo real para quem tiver acesso de edição.
+ *
+ * Organização:  casa/config          → ajustes, categorias, metas, regras, acertos
+ *               meses/<AAAA-MM>      → lançamentos daquele mês (um documento por mês)
+ */
+FC.nuvem = (() => {
+  const U = FC.util;
+  const st = () => FC.store.estado;
+  let db = null;
+  let estado = 'local'; // local | conectando | nuvem | offline
+  let ultimo = { config: '', meses: {} }; // o que já está gravado lá (JSON), para gravar só o que mudou
+  let fila = Promise.resolve();
+  let timer = null;
+  const ouvintes = [];
+
+  const avisar = () => ouvintes.forEach((f) => { try { f(estado); } catch (e) { /* ignora */ } });
+
+  function partes() {
+    const s = st();
+    const meses = {};
+    s.lancamentos.forEach((l) => { const m = (l.data || '').slice(0, 7) || 'sem-data'; (meses[m] = meses[m] || []).push(l); });
+    const config = {
+      versao: s.versao, demo: false,
+      config: { ...s.config, ia: { ...s.config.ia, apiKey: '' } },
+      categorias: s.categorias, metas: s.metas, regras: s.regras, acertos: s.acertos || [],
+    };
+    return { config, meses };
+  }
+
+  function aplicarRemoto(configDoc, mesesDocs) {
+    const s = st();
+    if (configDoc) {
+      const chave = s.config.ia.apiKey;
+      Object.assign(s, configDoc);
+      s.config.ia = { ...s.config.ia, apiKey: chave };
+    }
+    if (mesesDocs) s.lancamentos = Object.values(mesesDocs).flat();
+    s.demo = false;
+  }
+
+  function comTempo(promessa, ms) {
+    return Promise.race([promessa, new Promise((_, rej) => setTimeout(() => rej(new Error('tempo esgotado')), ms))]);
+  }
+
+  /* Carrega da nuvem. Se a nuvem estiver vazia, ela começa vazia (sem dados de exemplo). */
+  async function iniciar() {
+    if (!U.noClaude) return false;
+    estado = 'conectando'; avisar();
+    db = await window.claude.use('db');
+    if (!db) { estado = 'offline'; avisar(); return false; }
+    try {
+      const [cfg, meses] = await comTempo(Promise.all([db.doc('casa/config').get(), db.collection('meses').get()]), 12000);
+      const mesesDocs = {};
+      meses.docs.forEach((d) => { mesesDocs[d.id] = (d.data() || {}).lancamentos || []; ultimo.meses[d.id] = JSON.stringify(mesesDocs[d.id]); });
+      if (cfg.exists) {
+        aplicarRemoto(cfg.data(), mesesDocs);
+        ultimo.config = JSON.stringify(partes().config);
+      } else {
+        // primeira vez: começa do zero, mantendo categorias e ajustes padrão
+        const s = st();
+        s.lancamentos = Object.values(mesesDocs).flat();
+        s.diario = []; s.acertos = []; s.demo = false;
+        s.metas = [{ id: 'reserva', nome: 'Reserva de emergência', alvo: 0, guardado: 0, prazo: '', especial: true }];
+      }
+      estado = 'nuvem'; avisar();
+      escutar();
+      if (!cfg.exists) agendar();
+      return true;
+    } catch (e) {
+      console.warn('nuvem indisponível', e);
+      estado = 'offline'; avisar();
+      return false;
+    }
+  }
+
+  /* Mudanças feitas em outro aparelho (ou pela sua noiva) chegam aqui. */
+  function escutar() {
+    db.doc('casa/config').onSnapshot((snap) => {
+      if (!snap.exists || snap.metadata.hasPendingWrites) return;
+      const txt = JSON.stringify(snap.data());
+      if (txt === ultimo.config) return;
+      ultimo.config = txt;
+      aplicarRemoto(snap.data(), null);
+      FC.orquestrador.emitir('mudou');
+    }, () => { estado = 'offline'; avisar(); });
+    db.collection('meses').onSnapshot((snap) => {
+      if (snap.metadata.hasPendingWrites) return;
+      let mudou = false;
+      snap.docChanges().forEach((ch) => {
+        const id = ch.doc.id;
+        const lista = ch.type === 'removed' ? [] : ((ch.doc.data() || {}).lancamentos || []);
+        const txt = JSON.stringify(lista);
+        if (ultimo.meses[id] === txt) return;
+        ultimo.meses[id] = txt;
+        st().lancamentos = st().lancamentos.filter((l) => (l.data || '').slice(0, 7) !== id).concat(lista);
+        mudou = true;
+      });
+      if (mudou) FC.orquestrador.emitir('mudou');
+    }, () => { estado = 'offline'; avisar(); });
+  }
+
+  /* Agrupa várias mudanças seguidas em uma gravação. */
+  function agendar() {
+    if (!db || estado !== 'nuvem') return;
+    clearTimeout(timer);
+    timer = setTimeout(gravar, 900);
+  }
+
+  function gravar() {
+    fila = fila.then(async () => {
+      const { config, meses } = partes();
+      const cfgTxt = JSON.stringify(config);
+      try {
+        if (cfgTxt !== ultimo.config) { await db.doc('casa/config').set(config); ultimo.config = cfgTxt; }
+        const ids = new Set([...Object.keys(meses), ...Object.keys(ultimo.meses)]);
+        for (const id of ids) {
+          const lista = meses[id] || [];
+          const txt = JSON.stringify(lista);
+          if (txt === ultimo.meses[id]) continue;
+          if (lista.length) await db.doc(`meses/${id}`).set({ lancamentos: lista });
+          else await db.doc(`meses/${id}`).delete();
+          ultimo.meses[id] = txt;
+        }
+      } catch (e) {
+        console.warn('falha ao gravar na nuvem', e);
+        FC.orquestrador.log('arquivista', `Não consegui salvar na nuvem agora (${e.code || e.message}). Os dados continuam neste navegador; tento de novo na próxima mudança.`, 'aviso');
+      }
+    });
+    return fila;
+  }
+
+  return {
+    iniciar, agendar,
+    get estado() { return estado; },
+    aoMudar: (f) => ouvintes.push(f),
+  };
+})();
 
 </script>
   <!-- agentes: cada um cuida de uma parte -->
@@ -853,7 +1033,7 @@ FC.agentes.leitor = (() => {
   async function lerTexto(file) {
     const buf = await file.arrayBuffer();
     let txt = new TextDecoder('utf-8').decode(buf);
-    if (txt.includes('�')) txt = new TextDecoder('iso-8859-1').decode(buf); // extratos de banco antigos
+    if (txt.includes('\uFFFD')) txt = new TextDecoder('iso-8859-1').decode(buf); // extratos de banco antigos
     return txt;
   }
 
@@ -881,6 +1061,27 @@ FC.agentes.leitor = (() => {
       paginas.push(texto);
     }
     return { paginas: pdf.numPages, texto: paginas.join('\n\n') };
+  }
+
+  /* PDF escaneado (sem texto): transforma as primeiras páginas em imagens para o Claude ler. */
+  async function paginasComoImagens(file, max = 3) {
+    const i = await carregarPrimeiro(PDFJS);
+    const lib = window.pdfjsLib;
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER[i];
+    const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const imagens = [];
+    for (let p = 1; p <= Math.min(pdf.numPages, max); p++) {
+      const pag = await pdf.getPage(p);
+      const base = pag.getViewport({ scale: 1 });
+      const escala = Math.min(2, 1600 / Math.max(base.width, base.height));
+      const vp = pag.getViewport({ scale: escala });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+      await pag.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      imagens.push(await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85)));
+    }
+    O.log('leitor', `Converti ${imagens.length} página(s) de "${file.name}" em imagem para o Claude.`);
+    return imagens;
   }
 
   async function ocr(file) {
@@ -914,7 +1115,7 @@ FC.agentes.leitor = (() => {
     return saida;
   }
 
-  return { ler, ocr, tipoDe };
+  return { ler, ocr, tipoDe, paginasComoImagens };
 })();
 
 </script>
@@ -1188,6 +1389,13 @@ FC.agentes.extrator = (() => {
     return datas >= 3 && comValor >= 6 && /extrato|movimenta[cç]|total de (entradas|sa[ií]das)|saldo/i.test(texto);
   }
 
+  /* Pessoa física (CPF, mesmo mascarado) ou empresa (CNPJ, LTDA, S.A., MEI)? */
+  function contraparteDe(txt) {
+    if (/(•{2,}|\*{3})\.?\d{3}\.\d{3}-|\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/.test(txt)) return 'pessoa';
+    if (/\d{2}\.\d{3}\.\d{3}\/\d{4}|\b(ltda|eireli|s\.?\/?a\.?|me|mei|epp|cia)\b|institui[cç][aã]o|^\d{2}\.\d{3}\.\d{3}\s/i.test(txt)) return 'empresa';
+    return '';
+  }
+
   const titulo = (s) => s.toLowerCase().replace(/(^|[\s(/-])\S/g, (c) => c.toUpperCase());
 
   function nomeLimpo(s) {
@@ -1238,7 +1446,7 @@ FC.agentes.extrator = (() => {
         }
         const interno = INTERNO.test(bruto) || (titular.length > 8 && U.normalizar(nome).startsWith(titular));
         atual = {
-          data, tipo, forma, interno, bruto,
+          data, tipo, forma, interno, bruto, contraparte: contraparteDe(nome),
           descricao: interno ? bruto.replace(/\s+-\s+.*$/, '') : (nomeLimpo(nome) || bruto),
           valor: U.parseValor(v[2]),
         };
@@ -1260,6 +1468,7 @@ FC.agentes.extrator = (() => {
       docTipo: 'Extrato PDF',
       origem: 'importado',
       interno: i.interno,
+      contraparte: i.contraparte,
       notas: i.bruto,
       texto: i.bruto, // a linha original ("Reembolso recebido…", "Compra no débito…") também dá pistas ao Classificador
       confiancaExtracao: 0.9,
@@ -1285,20 +1494,25 @@ FC.agentes.classificador = (() => {
     papel: 'Sugere a categoria de cada gasto por palavras-chave e memoriza suas correções.',
   });
 
+  const RECEITAS = ['salario', 'extra', 'reembolso', 'recebidos'];
+
   const DICIONARIO = {
     moradia: ['aluguel', 'condominio', 'iptu', 'imobiliaria', 'quintoandar', 'seguro residencial', 'reforma', 'leroy', 'telhanorte', 'tok&stok', 'tok stok', 'etna', 'camicado'],
     contas: ['enel', 'cemig', 'copel', 'light', 'celesc', 'coelba', 'energisa', 'equatorial', 'neoenergia', 'sabesp', 'cedae', 'copasa', 'sanepar', 'embasa', 'comgas', 'naturgy', 'ultragaz', 'liquigas', 'vivo', 'claro', 'tim', 'oi fibra', 'net', 'internet', 'telefone', 'energia', 'eletricidade', 'eletropaulo', 'saneamento', 'agua', 'gas', 'conta de luz'],
-    mercado: ['supermercado', 'mercado', 'carrefour', 'assai', 'atacadao', 'pao de acucar', 'extra mercado', 'sonda', 'hirota', 'zaffari', 'guanabara', 'hortifruti', 'sacolao', 'acougue', 'padaria', 'mambo', 'oba hortifruti', 'swift', 'st marche', 'makro', 'sams club', 'atacarejo'],
+    mercado: ['supermercado', 'mercado', 'atacadista', 'conveniencia', 'mercearia', 'minimercado', 'emporio', 'carrefour', 'assai', 'atacadao', 'pao de acucar', 'extra mercado', 'sonda', 'hirota', 'zaffari', 'guanabara', 'hortifruti', 'sacolao', 'acougue', 'padaria', 'mambo', 'oba hortifruti', 'swift', 'st marche', 'makro', 'sams club', 'atacarejo'],
     transporte: ['uber', '99 ', '99app', 'cabify', 'posto', 'shell', 'ipiranga', 'petrobras', 'br mania', 'combustivel', 'gasolina', 'etanol', 'estacionamento', 'estapar', 'sem parar', 'conectcar', 'veloe', 'pedagio', 'metro', 'onibus', 'bilhete unico', 'ipva', 'licenciamento', 'oficina', 'pneu'],
     saude: ['farmacia', 'drogasil', 'droga raia', 'drogaria', 'pague menos', 'panvel', 'unimed', 'amil', 'sulamerica', 'bradesco saude', 'hapvida', 'hospital', 'clinica', 'laboratorio', 'fleury', 'dasa', 'consulta', 'dentista', 'odonto', 'psicolog', 'smart fit', 'smartfit', 'academia', 'bluefit', 'gympass', 'wellhub'],
-    educacao: ['curso', 'escola', 'faculdade', 'universidade', 'udemy', 'alura', 'coursera', 'livraria', 'amazon livros', 'mensalidade', 'ingles', 'idiomas', 'material escolar'],
-    restaurantes: ['ifood', 'rappi', 'restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'mcdonald', 'burger king', 'bk ', 'outback', 'coco bambu', 'madero', 'starbucks', 'cafe', 'cafeteria', 'bar ', 'churrascaria', 'sushi', 'aiqfome', 'ze delivery', 'subway', 'habib'],
-    lazer: ['cinema', 'cinemark', 'kinoplex', 'ingresso', 'sympla', 'eventim', 'teatro', 'show', 'parque', 'viagem', 'hotel', 'airbnb', 'booking', 'decolar', 'latam', 'gol ', 'azul ', 'steam', 'playstation', 'xbox', 'nintendo'],
+    educacao: ['curso', 'escola', 'faculdade', 'universidade', 'udemy', 'alura', 'coursera', 'livraria', 'amazon livros', 'mensalidade', 'ingles', 'idiomas', 'material escolar', 'hotmart', 'eduzz', 'kiwify', 'domestika'],
+    impostos: ['receita federal', 'darf', 'simples nacional', 'das mei', 'irpf', 'imposto', 'detran', 'multa', 'prefeitura', 'inss', 'taxa de', 'tributo', 'cartorio'],
+    cartao: ['pagamento de fatura', 'fatura do cartao', 'fatura cartao', 'pagamento do cartao', 'pagamento cartao'],
+    doacoes: ['paroquia', 'igreja', 'dizimo', 'oferta', 'doacao', 'vakinha', 'santuario', 'diocese', 'capela', 'ong '],
+    restaurantes: ['ifood', 'rappi', 'restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'mcdonald', 'burger king', 'bk ', 'outback', 'coco bambu', 'madero', 'starbucks', 'cafe', 'cafeteria', 'sorveteria', 'acai', 'doceria', 'confeitaria', 'cacau show', 'kopenhagen', 'chocolate', 'lanche', 'lanches', 'pastelaria', 'pizza', 'burger', 'burguer', 'cervejaria', 'boteco', 'delivery', 'bar ', 'churrascaria', 'sushi', 'aiqfome', 'ze delivery', 'subway', 'habib'],
+    lazer: ['cinema', 'cinemark', 'kinoplex', 'ingresso', 'sympla', 'eventim', 'teatro', 'parque', 'viagem', 'viagens', 'turismo', 'passagem aerea', 'hotel', 'airbnb', 'booking', 'decolar', 'latam', 'gol ', 'azul ', 'steam', 'playstation', 'xbox', 'nintendo'],
     assinaturas: ['netflix', 'spotify', 'disney', 'hbo', 'max ', 'prime video', 'amazon prime', 'globoplay', 'youtube premium', 'deezer', 'apple.com', 'icloud', 'google one', 'paramount', 'crunchyroll', 'chatgpt', 'claude', 'microsoft 365', 'adobe'],
     vestuario: ['renner', 'riachuelo', 'c&a', 'cea ', 'zara', 'hering', 'shein', 'centauro', 'netshoes', 'nike', 'adidas', 'boticario', 'natura', 'sephora', 'salao', 'barbearia', 'cabeleireiro', 'manicure', 'estetica', 'roupa', 'calcado'],
     pets: ['petz', 'cobasi', 'petlove', 'veterinari', 'pet shop', 'petshop', 'racao', 'banho e tosa'],
     presentes: ['presente', 'floricultura', 'flores', 'vivara', 'pandora', 'giuliana flores', 'lojas americanas presente'],
-    casamento: ['buffet', 'cerimonial', 'assessoria de casamento', 'fotografo', 'fotografia', 'filmagem', 'vestido de noiva', 'noiva', 'noivo', 'decoracao', 'convite', 'aliancas', 'alianca', 'dj ', 'banda', 'bem casado', 'bolo de casamento', 'igreja', 'cartorio', 'lua de mel', 'espaco de eventos', 'sitio', 'traje'],
+    casamento: ['buffet', 'cerimonial', 'assessoria de casamento', 'fotografo', 'fotografia', 'filmagem', 'vestido de noiva', 'noiva', 'noivo', 'decoracao', 'convite', 'aliancas', 'alianca', 'dj ', 'banda', 'bem casado', 'bolo de casamento', 'lua de mel', 'espaco de eventos', 'sitio', 'traje'],
     investimentos: ['tesouro', 'cdb', 'lci', 'lca', 'aporte', 'corretora', 'xp invest', 'rico ', 'clear', 'nuinvest', 'btg', 'previdencia', 'poupanca', 'reserva'],
     salario: ['salario', 'folha de pagamento', 'pagamento de salario', 'proventos', 'remuneracao'],
     extra: ['freela', 'freelance', 'venda', 'rendimento', 'dividendos', 'cashback', 'bonus', 'pix recebido'],
@@ -1332,7 +1546,7 @@ FC.agentes.classificador = (() => {
       let melhor = { id: null, pontos: 0, termo: '' };
       Object.entries(DICIONARIO).forEach(([id, termos]) => {
         if (!FC.store.estado.categorias.some((c) => c.id === id)) return;
-        if ((r.tipo === 'receita') !== ['salario', 'extra', 'reembolso'].includes(id)) return;
+        if ((r.tipo === 'receita') !== RECEITAS.includes(id)) return;
         termos.forEach((t) => {
           const p = (casa(alvo, t) ? 3 : 0) + (casa(texto, t) ? 1 : 0);
           if (p > melhor.pontos) melhor = { id, pontos: p, termo: t.trim() };
@@ -1346,14 +1560,22 @@ FC.agentes.classificador = (() => {
       if (melhor.id) resultado = { categoriaId: melhor.id, confianca: melhor.pontos >= 3 ? 0.85 : 0.6, motivo: `palavra-chave "${melhor.termo}"` };
     }
 
-    // 3) sem pistas: usa o histórico do mesmo estabelecimento
+    // 3) histórico: o mesmo estabelecimento já lançado antes, do mesmo tipo
     if (!resultado) {
-      const chave = U.normalizar(r.descricao).split(' ')[0];
-      const igual = chave && FC.store.estado.lancamentos.find((l) => U.normalizar(l.descricao).startsWith(chave));
-      resultado = igual
-        ? { categoriaId: igual.categoriaId, confianca: 0.55, motivo: `parecido com "${igual.descricao}"` }
-        : { categoriaId: r.tipo === 'receita' ? 'extra' : 'outros', confianca: 0.2, motivo: 'sem pistas — revise' };
+      const chave = U.normalizar(r.descricao).split(' ').slice(0, 2).join(' ');
+      const igual = chave.length > 2 && FC.store.estado.lancamentos.find((l) => l.tipo === r.tipo && U.normalizar(l.descricao).startsWith(chave));
+      if (igual) resultado = { categoriaId: igual.categoriaId, confianca: 0.7, motivo: `igual a "${igual.descricao}"` };
     }
+
+    // 4) quem está do outro lado: pessoa física (CPF) ou empresa (CNPJ)
+    if (!resultado && r.contraparte) {
+      const existe = (id) => FC.store.estado.categorias.some((c) => c.id === id);
+      if (r.contraparte === 'pessoa' && r.tipo === 'despesa' && existe('pessoas')) resultado = { categoriaId: 'pessoas', confianca: 0.6, motivo: 'Pix para pessoa física' };
+      else if (r.contraparte === 'pessoa' && r.tipo === 'receita' && existe('recebidos')) resultado = { categoriaId: 'recebidos', confianca: 0.6, motivo: 'recebido de pessoa física' };
+      else if (r.contraparte === 'empresa' && r.tipo === 'receita' && r.valor >= 1000) resultado = { categoriaId: 'salario', confianca: 0.5, motivo: 'depósito de empresa — parece salário, confira' };
+    }
+
+    if (!resultado) resultado = { categoriaId: r.tipo === 'receita' ? 'extra' : 'outros', confianca: 0.2, motivo: 'sem pistas — revise' };
     O.status('classificador', 'ocioso');
     O.log('classificador', `"${r.descricao}" → ${FC.store.categoria(resultado.categoriaId).nome} (${Math.round(resultado.confianca * 100)}%, ${resultado.motivo}).`);
     return resultado;
@@ -1377,25 +1599,64 @@ FC.agentes.classificador = (() => {
 </script>
   <script>
 /*
- * Agente Analista IA (opcional) — usa o Claude para ler recibos difíceis:
- * PDFs digitalizados, fotos de cupom, faturas com layout estranho.
- * Só roda se você colocar sua chave da API em Ajustes. A chave fica neste navegador.
+ * Agente Analista IA — usa o Claude para ler recibos difíceis e classificar extratos.
+ *
+ * Dois jeitos de falar com o Claude:
+ *  • "conta": publicado no claude.ai, o app pede ao Claude da SUA conta (sem chave de API,
+ *    usa o limite do seu plano; o claude.ai pede sua permissão na primeira vez).
+ *  • "chave": fora do claude.ai, com uma chave da API em Ajustes (opcional, cobrança à parte).
+ * Sem nenhum dos dois, o app segue funcionando com os agentes locais.
  */
 FC.agentes.ia = (() => {
   const O = FC.orquestrador;
   const U = FC.util;
+  const st = () => FC.store.estado;
   O.registrar({
     id: 'ia', nome: 'Analista IA', sigla: 'IA',
-    papel: 'Opcional. Envia o documento ao Claude e recebe valor, datas, itens e categoria já estruturados.',
+    papel: 'Pede ao Claude para ler recibos difíceis (fotos, PDFs escaneados) e para classificar as linhas de extratos.',
   });
 
-  let clienteCache = null;
-  let chaveCache = '';
+  let sample = null;   // função do claude.ai (Claude da conta)
+  let limites = null;
+  let recusado = false;
+  let clienteCache = null, chaveCache = '';
 
-  function disponivel() { return !!FC.store.estado.config.ia.apiKey; }
+  /* ---------- conexão ---------- */
+  async function iniciar() {
+    if (!U.noClaude) return;
+    try {
+      sample = await window.claude.use('sample');
+      if (sample) limites = await sample.limits().catch(() => null);
+    } catch (e) { sample = null; }
+    if (sample) O.log('ia', 'Conectado ao Claude da sua conta (sem chave de API).');
+    O.emitir('mudou');
+  }
 
+  function provedor() {
+    if (sample && !recusado) return 'conta';
+    if (!U.noClaude && st().config.ia.apiKey) return 'chave';
+    return null;
+  }
+  const disponivel = () => !!provedor();
+  const aceitaImagens = () => provedor() === 'chave' || !!(limites && limites.images);
+
+  function explicarErro(e) {
+    const c = e && e.code;
+    if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled') {
+      recusado = true;
+      return 'o Claude não foi liberado para esta página — sigo com os agentes locais';
+    }
+    if (c === 'rate_limited') return 'limite de uso do Claude atingido agora — tente mais tarde';
+    if (c === 'session_expired') return 'sua sessão no Claude expirou — entre de novo';
+    if (c === 'image_rejected') return 'a imagem não foi aceita (tamanho ou formato)';
+    if (c === 'refused') return 'o Claude não quis processar este documento';
+    if (c === 'invalid_json') return 'resposta fora do formato esperado';
+    return (e && (e.message || c)) || 'falha desconhecida';
+  }
+
+  /* ---------- chave de API (opcional, fora do claude.ai) ---------- */
   async function cliente() {
-    const chave = FC.store.estado.config.ia.apiKey;
+    const chave = st().config.ia.apiKey;
     if (clienteCache && chaveCache === chave) return clienteCache;
     const { default: Anthropic } = await import('https://esm.sh/@anthropic-ai/sdk');
     clienteCache = new Anthropic({ apiKey: chave, dangerouslyAllowBrowser: true });
@@ -1403,116 +1664,197 @@ FC.agentes.ia = (() => {
     return clienteCache;
   }
 
-  function esquema() {
-    const cats = FC.store.estado.categorias.map((c) => c.id);
-    return {
-      type: 'object',
-      additionalProperties: false,
-      required: ['tipo', 'estabelecimento', 'descricao', 'cnpj', 'valor_total', 'data', 'vencimento', 'forma_pagamento', 'tipo_documento', 'categoria', 'itens', 'parcela_atual', 'parcelas_total', 'confianca'],
-      properties: {
-        tipo: { type: 'string', enum: ['despesa', 'receita'] },
-        estabelecimento: { type: 'string', description: 'Nome fantasia de quem recebeu o pagamento' },
-        descricao: { type: 'string', description: 'Descrição curta para o lançamento, ex.: "Enel — energia out/2026"' },
-        cnpj: { type: 'string', description: 'CNPJ ou string vazia' },
-        valor_total: { type: 'number', description: 'Valor final pago ou a pagar, em reais' },
-        data: { type: 'string', description: 'Data da compra/emissão em AAAA-MM-DD, ou vazia' },
-        vencimento: { type: 'string', description: 'Data de vencimento em AAAA-MM-DD, ou vazia' },
-        forma_pagamento: { type: 'string', enum: ['pix', 'cartao', 'debito', 'boleto', 'dinheiro', 'outro'] },
-        tipo_documento: { type: 'string', description: 'Ex.: Nota fiscal, Boleto, Comprovante Pix, Fatura, Recibo' },
-        categoria: { type: 'string', enum: cats },
-        itens: {
-          type: 'array',
-          items: {
-            type: 'object', additionalProperties: false, required: ['nome', 'valor'],
-            properties: { nome: { type: 'string' }, valor: { type: 'number' } },
-          },
-        },
-        parcela_atual: { type: 'integer', description: '0 se não for parcelado' },
-        parcelas_total: { type: 'integer', description: '0 se não for parcelado' },
-        confianca: { type: 'number', description: 'De 0 a 1, quão seguro você está do valor e das datas' },
-      },
+  async function jsonPorChave(conteudo, schema) {
+    const c = await cliente();
+    const resp = await c.beta.messages.create({
+      model: st().config.ia.modelo || 'claude-opus-5-5',
+      max_tokens: 8000,
+      betas: ['server-side-fallback-2026-07-01'],
+      fallbacks: 'default',
+      output_config: { effort: 'low', format: { type: 'json_schema', schema } },
+      messages: [{ role: 'user', content: conteudo }],
+    });
+    if (resp.stop_reason === 'refusal') throw { code: 'refused' };
+    const bloco = resp.content.find((b) => b.type === 'text');
+    if (!bloco) throw new Error('resposta vazia');
+    return JSON.parse(bloco.text);
+  }
+
+  /* ---------- descrição das categorias para o Claude ---------- */
+  function listaCategorias() {
+    return st().categorias.map((c) => `${c.id} = ${c.nome} (${c.grupo === 'receita' ? 'entrada' : c.grupo})`).join('\n');
+  }
+  const idsReceita = () => st().categorias.filter((c) => c.grupo === 'receita').map((c) => c.id);
+  const idsDespesa = () => st().categorias.filter((c) => c.grupo !== 'receita').map((c) => c.id);
+
+  /* ================= 1) Ler um recibo / boleto / foto ================= */
+  const FORMATO_RECIBO = `{"tipo":"despesa ou receita","estabelecimento":"nome fantasia","descricao":"descrição curta para o lançamento","cnpj":"ou vazio","valor_total":0.00,"data":"AAAA-MM-DD ou vazio","vencimento":"AAAA-MM-DD ou vazio","forma_pagamento":"pix|cartao|debito|boleto|dinheiro|outro","tipo_documento":"Nota fiscal, Boleto, Comprovante Pix, Fatura, Recibo…","categoria":"id da lista","itens":[{"nome":"","valor":0.00}],"parcela_atual":0,"parcelas_total":0,"confianca":0.0}`;
+
+  function instrucaoRecibo() {
+    return `Você está ajudando um casal brasileiro a controlar as finanças. Leia o documento financeiro (recibo, nota fiscal, boleto, fatura ou comprovante) e extraia os dados.
+Regras: use o valor FINAL pago ou a pagar (depois de descontos), nunca subtotais. Datas no formato AAAA-MM-DD; hoje é ${U.hoje()}. "confianca" vai de 0 a 1 e diz quão seguro você está do valor e das datas. Se não for parcelado, parcela_atual e parcelas_total são 0.
+Escolha "categoria" usando exatamente um destes ids:
+${listaCategorias()}
+Responda somente com um objeto JSON neste formato:
+${FORMATO_RECIBO}`;
+  }
+
+  function normalizarRecibo(j) {
+    const cats = st().categorias.map((c) => c.id);
+    const tipo = j.tipo === 'receita' ? 'receita' : 'despesa';
+    const dataOk = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d : '');
+    const valor = Math.round((Number(j.valor_total) || 0) * 100) / 100;
+    const r = {
+      tipo,
+      descricao: String(j.descricao || j.estabelecimento || 'Documento').slice(0, 80),
+      estabelecimento: String(j.estabelecimento || ''),
+      cnpj: String(j.cnpj || ''),
+      valor,
+      data: dataOk(j.data) || dataOk(j.vencimento) || U.hoje(),
+      vencimento: dataOk(j.vencimento) || dataOk(j.data) || U.hoje(),
+      forma: ['pix', 'cartao', 'debito', 'boleto', 'dinheiro', 'outro'].includes(j.forma_pagamento) ? j.forma_pagamento : 'pix',
+      docTipo: String(j.tipo_documento || 'Documento'),
+      itens: Array.isArray(j.itens) ? j.itens.slice(0, 30).map((i) => ({ nome: String(i.nome || ''), valor: Number(i.valor) || 0 })) : [],
+      parcela: Number(j.parcelas_total) > 1 ? { n: Number(j.parcela_atual) || 1, total: Number(j.parcelas_total) } : null,
+      categoriaId: cats.includes(j.categoria) ? j.categoria : (tipo === 'receita' ? 'extra' : 'outros'),
+      confianca: Math.max(0, Math.min(1, Number(j.confianca) || 0.6)),
+      origem: 'ia',
+      motivo: 'escolhida pelo Claude',
     };
+    r.confiancaExtracao = r.confianca;
+    const jaPago = /nota fiscal|cupom|comprovante|recibo/i.test(r.docTipo);
+    r.status = jaPago ? 'pago' : 'pendente';
+    r.pagoEm = jaPago ? r.data : '';
+    const regra = st().regras.find((g) => U.normalizar(r.descricao).includes(g.padrao));
+    if (regra) { r.categoriaId = regra.categoriaId; r.confianca = 0.97; r.motivo = `regra aprendida: "${regra.padrao}"`; }
+    return r;
   }
 
   async function analisar(lido) {
+    const via = provedor();
+    if (!via) throw new Error('Claude não está disponível');
     O.status('ia', 'trabalhando');
-    O.log('ia', `Enviando "${lido.nome}" ao Claude…`);
+    O.log('ia', `Pedindo ao Claude${via === 'conta' ? ' da sua conta' : ''} para ler "${lido.nome}"…`);
     try {
-      const cfg = FC.store.estado.config.ia;
-      const cats = FC.store.estado.categorias.map((c) => `${c.id} = ${c.nome} (${c.grupo})`).join('\n');
-      const conteudo = [];
-      if (lido.tipo === 'pdf' || lido.tipo === 'imagem') {
-        const data = await U.arquivoParaBase64(lido.arquivo);
-        conteudo.push(lido.tipo === 'pdf'
-          ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } }
-          : { type: 'image', source: { type: 'base64', media_type: lido.mime || 'image/jpeg', data } });
+      let j;
+      const temTexto = (lido.texto || '').trim().length >= 25;
+      if (via === 'conta') {
+        const opcoes = { modelTier: 'default', effort: 'low' };
+        let texto = '';
+        if (temTexto) texto = `\n\nTexto extraído do documento:\n"""\n${lido.texto.slice(0, 40000)}\n"""`;
+        else if (lido.tipo === 'imagem') opcoes.images = [lido.arquivo];
+        else if (lido.tipo === 'pdf') opcoes.images = await FC.agentes.leitor.paginasComoImagens(lido.arquivo, (limites && limites.images && limites.images.maxCount) || 3);
+        if (opcoes.images && !aceitaImagens()) throw new Error('esta visualização não envia imagens ao Claude');
+        j = await sample.json(instrucaoRecibo() + (opcoes.images ? '\n\nO documento está nas imagens anexadas.' : texto), opcoes);
       } else {
-        conteudo.push({ type: 'text', text: lido.texto.slice(0, 50000) });
+        const conteudo = [];
+        if (lido.tipo === 'pdf' || lido.tipo === 'imagem') {
+          const data = await U.arquivoParaBase64(lido.arquivo);
+          conteudo.push(lido.tipo === 'pdf'
+            ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } }
+            : { type: 'image', source: { type: 'base64', media_type: lido.mime || 'image/jpeg', data } });
+        } else conteudo.push({ type: 'text', text: lido.texto.slice(0, 50000) });
+        conteudo.push({ type: 'text', text: instrucaoRecibo() });
+        j = await jsonPorChave(conteudo, esquemaRecibo());
       }
-      conteudo.push({
-        type: 'text',
-        text: `Este é um documento financeiro pessoal brasileiro (recibo, nota fiscal, boleto, fatura ou comprovante).
-Extraia os dados para um controle financeiro de um casal. Use o valor FINAL (após descontos), não subtotais.
-Datas no formato AAAA-MM-DD. Hoje é ${U.hoje()}.
-Escolha a categoria mais adequada entre:
-${cats}`,
-      });
-
-      const c = await cliente();
-      const resp = await c.beta.messages.create({
-        model: cfg.modelo || 'claude-opus-5-5',
-        max_tokens: 4000,
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        output_config: { effort: 'low', format: { type: 'json_schema', schema: esquema() } },
-        messages: [{ role: 'user', content: conteudo }],
-      });
-      if (resp.stop_reason === 'refusal') throw new Error('o modelo recusou este documento');
-      const bloco = resp.content.find((b) => b.type === 'text');
-      if (!bloco) throw new Error('resposta vazia');
-      const j = JSON.parse(bloco.text);
-
-      const r = {
-        tipo: j.tipo,
-        descricao: j.descricao || j.estabelecimento,
-        estabelecimento: j.estabelecimento,
-        cnpj: j.cnpj,
-        valor: Math.round((j.valor_total || 0) * 100) / 100,
-        data: j.data || j.vencimento || U.hoje(),
-        vencimento: j.vencimento || j.data || U.hoje(),
-        forma: j.forma_pagamento,
-        docTipo: j.tipo_documento,
-        itens: j.itens || [],
-        parcela: j.parcelas_total > 1 ? { n: j.parcela_atual || 1, total: j.parcelas_total } : null,
-        categoriaId: j.categoria,
-        confianca: j.confianca,
-        confiancaExtracao: j.confianca,
-        origem: 'ia',
-      };
-      // regras que você ensinou valem mais que o palpite da IA
-      const regra = FC.store.estado.regras.find((g) => U.normalizar(r.descricao).includes(g.padrao));
-      if (regra) { r.categoriaId = regra.categoriaId; r.confianca = 0.97; }
-
-      O.log('ia', `${r.docTipo}: ${r.estabelecimento} — ${U.moeda(r.valor)}, categoria ${FC.store.categoria(r.categoriaId).nome} (${Math.round((j.confianca || 0) * 100)}%).`);
+      if (!j || typeof j !== 'object' || Array.isArray(j)) throw { code: 'invalid_json' };
+      const r = normalizarRecibo(j);
+      O.log('ia', `${r.docTipo}: ${r.estabelecimento || r.descricao} — ${U.moeda(r.valor)}, ${FC.store.categoria(r.categoriaId).nome} (${Math.round(r.confianca * 100)}%).`);
       return r;
+    } catch (e) {
+      throw new Error(explicarErro(e));
     } finally {
       O.status('ia', 'ocioso');
     }
   }
 
-  async function testar() {
-    const c = await cliente();
-    const resp = await c.messages.create({
-      model: FC.store.estado.config.ia.modelo || 'claude-opus-5-5',
-      max_tokens: 50,
-      output_config: { effort: 'low' },
-      messages: [{ role: 'user', content: 'Responda apenas: ok' }],
-    });
-    O.log('ia', 'Conexão com o Claude testada com sucesso.');
-    return resp;
+  /* ================= 2) Classificar várias linhas de extrato de uma vez ================= */
+  async function classificarLote(rascunhos) {
+    const via = provedor();
+    if (!via) return 0;
+    const alvos = rascunhos.filter((r) => !r.interno && !/^regra aprendida/.test(r.motivo || ''));
+    if (!alvos.length) return 0;
+    O.status('ia', 'trabalhando');
+    O.log('ia', `Pedindo ao Claude${via === 'conta' ? ' da sua conta' : ''} para classificar ${alvos.length} movimentação(ões)…`);
+    const p = st().config.pessoas;
+    let aplicadas = 0;
+    try {
+      for (let ini = 0; ini < alvos.length; ini += 80) {
+        const bloco = alvos.slice(ini, ini + 80);
+        const linhas = bloco.map((r, i) => `${i}\t${r.tipo === 'receita' ? 'ENTRADA' : 'SAÍDA'}\t${r.valor.toFixed(2)}\t${r.descricao}\t${(r.notas || '').slice(0, 140)}`).join('\n');
+        const instrucao = `Você está ajudando um casal brasileiro (${p.a} e ${p.b}) a categorizar movimentações de um extrato bancário de ${p.a}.
+Para cada linha, escolha a categoria mais provável. Use o nome do estabelecimento ou da pessoa e o texto original da linha.
+Dicas: depósitos recorrentes de empresa costumam ser salário ou bonificação; Pix entre pessoas físicas vai para "Pix para pessoas" (saída) ou "Transferências recebidas" (entrada), a menos que o nome deixe claro outra coisa; pagamento de fatura de cartão vai para a fatura do cartão.
+Ids permitidos para ENTRADA: ${idsReceita().join(', ')}
+Ids permitidos para SAÍDA: ${idsDespesa().join(', ')}
+Categorias:
+${listaCategorias()}
+
+Linhas (índice, tipo, valor em R$, descrição, linha original do extrato):
+${linhas}
+
+Responda somente com um array JSON, um objeto por linha, no formato:
+[{"i":0,"categoria":"id","confianca":0.0,"motivo":"até 6 palavras em português"}]`;
+        let lista;
+        if (via === 'conta') lista = await sample.json(instrucao, { modelTier: 'default', effort: 'low' });
+        else lista = (await jsonPorChave([{ type: 'text', text: instrucao }], esquemaLote())).itens;
+        if (!Array.isArray(lista)) throw { code: 'invalid_json' };
+        lista.forEach((x) => {
+          const r = bloco[Number(x.i)];
+          if (!r) return;
+          const permitidos = r.tipo === 'receita' ? idsReceita() : idsDespesa();
+          if (!permitidos.includes(x.categoria)) return;
+          r.categoriaId = x.categoria;
+          r.confianca = Math.max(0, Math.min(1, Number(x.confianca) || 0.7));
+          r.motivo = `Claude: ${String(x.motivo || '').slice(0, 60)}`;
+          r.origem = 'ia';
+          aplicadas++;
+        });
+      }
+      O.log('ia', `Classifiquei ${aplicadas} de ${alvos.length} movimentação(ões).`);
+    } catch (e) {
+      O.log('ia', `Não consegui classificar com o Claude: ${explicarErro(e)}. Mantive as categorias do Classificador local.`, 'aviso');
+    } finally {
+      O.status('ia', 'ocioso');
+    }
+    return aplicadas;
   }
 
-  return { disponivel, analisar, testar };
+  /* ---------- esquemas para a API por chave ---------- */
+  function esquemaRecibo() {
+    const cats = st().categorias.map((c) => c.id);
+    return {
+      type: 'object', additionalProperties: false,
+      required: ['tipo', 'estabelecimento', 'descricao', 'cnpj', 'valor_total', 'data', 'vencimento', 'forma_pagamento', 'tipo_documento', 'categoria', 'itens', 'parcela_atual', 'parcelas_total', 'confianca'],
+      properties: {
+        tipo: { type: 'string', enum: ['despesa', 'receita'] },
+        estabelecimento: { type: 'string' }, descricao: { type: 'string' }, cnpj: { type: 'string' },
+        valor_total: { type: 'number' }, data: { type: 'string' }, vencimento: { type: 'string' },
+        forma_pagamento: { type: 'string', enum: ['pix', 'cartao', 'debito', 'boleto', 'dinheiro', 'outro'] },
+        tipo_documento: { type: 'string' }, categoria: { type: 'string', enum: cats },
+        itens: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['nome', 'valor'], properties: { nome: { type: 'string' }, valor: { type: 'number' } } } },
+        parcela_atual: { type: 'integer' }, parcelas_total: { type: 'integer' }, confianca: { type: 'number' },
+      },
+    };
+  }
+  function esquemaLote() {
+    return {
+      type: 'object', additionalProperties: false, required: ['itens'],
+      properties: { itens: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['i', 'categoria', 'confianca', 'motivo'], properties: { i: { type: 'integer' }, categoria: { type: 'string', enum: st().categorias.map((c) => c.id) }, confianca: { type: 'number' }, motivo: { type: 'string' } } } } },
+    };
+  }
+
+  async function testar() {
+    const via = provedor();
+    if (via === 'conta') { await sample('Responda apenas: ok', { modelTier: 'quick', cache: false }); }
+    else if (via === 'chave') {
+      const c = await cliente();
+      await c.messages.create({ model: st().config.ia.modelo || 'claude-opus-5-5', max_tokens: 50, output_config: { effort: 'low' }, messages: [{ role: 'user', content: 'Responda apenas: ok' }] });
+    } else throw new Error('nenhuma conexão configurada');
+    O.log('ia', 'Conexão com o Claude testada com sucesso.');
+  }
+
+  return { iniciar, disponivel, provedor, aceitaImagens, analisar, classificarLote, testar, explicarErro };
 })();
 
 </script>
@@ -1577,7 +1919,7 @@ FC.agentes.tesoureiro = (() => {
     l.vencimento = l.vencimento || l.data;
     if (l.conta !== 'casal') l.pagoPor = l.conta;
     if (l.status === 'pago' && !l.pagoEm) l.pagoEm = U.hoje();
-    delete l.duplicado; delete l.texto; delete l.motivo; delete l.confiancaExtracao;
+    delete l.duplicado; delete l.texto; delete l.motivo; delete l.confiancaExtracao; delete l.interno; delete l.contraparte;
     return l;
   }
 
@@ -1998,6 +2340,10 @@ FC.agentes.arquivista = (() => {
     papel: 'Exporta CSV (abre no Excel/Sheets), faz backup completo em JSON e restaura quando precisar.',
   });
 
+  const baixar = (nome, conteudo, tipo) => U.baixar(nome, conteudo, tipo)
+    .then(() => true)
+    .catch((e) => { O.log('arquivista', `Download de "${nome}" não concluído (${e.code || e.message}).`, 'aviso'); return false; });
+
   const celula = (v) => {
     const s = String(v ?? '');
     return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -2013,7 +2359,7 @@ FC.agentes.arquivista = (() => {
       l.recorrente ? 'sim' : 'não', l.parcela ? `${l.parcela.n}/${l.parcela.total}` : '', l.origem, l.notas,
     ].map(celula).join(';'));
     // BOM para o Excel reconhecer acentos
-    U.baixar(nome, '﻿' + [cab.join(';'), ...linhas].join('\r\n'), 'text/csv;charset=utf-8');
+    baixar(nome, '﻿' + [cab.join(';'), ...linhas].join('\r\n'), 'text/csv;charset=utf-8');
     O.log('arquivista', `Exportei ${lista.length} lançamento(s) em "${nome}".`);
   }
 
@@ -2021,7 +2367,7 @@ FC.agentes.arquivista = (() => {
     const nome = `backup-financas-${U.hoje()}.json`;
     const copia = JSON.parse(JSON.stringify(st()));
     copia.config.ia.apiKey = ''; // nunca exporta a chave
-    U.baixar(nome, JSON.stringify(copia, null, 2), 'application/json');
+    baixar(nome, JSON.stringify(copia, null, 2), 'application/json');
     O.log('arquivista', `Backup completo salvo em "${nome}" (${st().lancamentos.length} lançamentos).`);
   }
 
@@ -2036,10 +2382,10 @@ FC.agentes.arquivista = (() => {
   }
 
   function modeloCSV() {
-    U.baixar('modelo-importacao.csv', '﻿Data;Descrição;Valor\r\n05/11/2026;Salário;8200,00\r\n07/11/2026;Carrefour;-412,35\r\n10/11/2026;Aluguel;-2650,00\r\n', 'text/csv;charset=utf-8');
+    baixar('modelo-importacao.csv', '﻿Data;Descrição;Valor\r\n05/11/2026;Salário;8200,00\r\n07/11/2026;Carrefour;-412,35\r\n10/11/2026;Aluguel;-2650,00\r\n', 'text/csv;charset=utf-8');
   }
 
-  return { exportarCSV, backup, restaurar, modeloCSV };
+  return { exportarCSV, backup, restaurar, modeloCSV, baixar };
 })();
 
 </script>
@@ -2142,6 +2488,7 @@ FC.graficos = (() => {
 
   /* ---------- linhas (receitas x despesas por mês) com mira e tooltip ---------- */
   function linhas(el, pontos, series) {
+    if (!pontos.some((p) => series.some((s) => p[s.chave]))) { el.innerHTML = '<p class="vazio">O gráfico aparece quando houver lançamentos.</p>'; return; }
     const W = Math.max(320, el.clientWidth || 640), H = 240;
     const m = { t: 16, r: 74, b: 28, l: 56 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
@@ -2250,7 +2597,13 @@ FC.telas = (() => {
     const res = A.planejador.reserva(ctx.ym);
     const metas = A.planejador.metas().filter((m) => !m.especial).slice(0, 3);
 
+    const vazio = !st().lancamentos.length;
     const html = `
+      ${vazio ? `<section class="cartao boas-vindas">
+        <div><h3>Comece pelo extrato do mês</h3>
+        <p>Ainda não há lançamentos${FC.nuvem.estado === 'conectando' ? ' (carregando da nuvem…)' : ''}. Envie o extrato do banco em PDF, CSV ou OFX, uma foto de recibo ou um boleto: os agentes separam cada movimentação, sugerem a categoria e você confere antes de lançar.</p></div>
+        <div class="linha-acoes"><button class="btn btn-p" data-acao="ir" data-aba="importar">Importar extrato ou recibo</button><button class="btn" data-acao="novo">Lançar à mão</button></div>
+      </section>` : ''}
       <section class="kpis">
         <div class="kpi"><div class="rot">Receitas do mês</div><div class="val">${U.moeda(t.receitas)}</div><div class="det">${ant.receitas ? `${t.receitas >= ant.receitas ? '+' : ''}${U.moeda(t.receitas - ant.receitas)} vs. mês anterior` : '&nbsp;'}</div></div>
         <div class="kpi"><div class="rot">Despesas do mês</div><div class="val">${U.moeda(t.despesas)}</div><div class="det">${ant.despesas ? `<b class="${varDesp > 0 ? 'sobe' : 'desce'}">${varDesp > 0 ? '▲' : '▼'} ${Math.abs(varDesp).toFixed(0)}%</b> vs. ${U.mesCurto(U.somaMes(ctx.ym, -1))}` : '&nbsp;'}</div></div>
@@ -2405,6 +2758,7 @@ FC.telas = (() => {
   /* =============== IMPORTAR =============== */
   function importar(ctx) {
     const ia = A.ia.disponivel();
+    const viaConta = A.ia.provedor() === 'conta';
     const r = ctx.rascunhos;
     const etapas = [['leitor', 'LE', 'Leitor'], ['ia', 'IA', 'Analista IA'], ['extrator', 'EX', 'Extrator'], ['classificador', 'CL', 'Classificador'], ['sentinela', 'SE', 'Sentinela']];
     const html = `
@@ -2419,9 +2773,10 @@ FC.telas = (() => {
           </label>
           <div class="grade-campos mt">
             <label class="campo">Lançar na conta<select id="imp-conta">${opcoesContas(ctx.impConta || 'casal')}</select></label>
-            <label class="campo">&nbsp;<span class="check"><input type="checkbox" id="imp-ia" ${ia ? '' : 'disabled'} ${ia && st().config.ia.sempre ? 'checked' : ''}> Usar o Analista IA (Claude)</span></label>
+            <label class="campo">&nbsp;<span class="check"><input type="checkbox" id="imp-ia" ${ia ? '' : 'disabled'} ${ia && (viaConta || st().config.ia.sempre) ? 'checked' : ''}> ${viaConta ? 'Usar o Claude da sua conta' : 'Usar o Analista IA (Claude)'}</span></label>
           </div>
-          ${ia ? '' : '<p class="aviso-caixa mt">O Analista IA está desligado. Os documentos são lidos localmente pelo Extrator. Para ler fotos e PDFs digitalizados com mais precisão, coloque sua chave da API do Claude em <a href="#" data-acao="ir" data-aba="ajustes">Ajustes</a>.</p>'}
+          ${viaConta ? '<p class="aviso-caixa mt"><b>Claude da sua conta ligado.</b> Valores e datas de extratos são lidos aqui no app; o Claude escolhe as categorias e lê fotos e PDFs escaneados. Na primeira vez o claude.ai pede sua permissão. Usa o limite do seu plano, sem chave de API.</p>' : ''}
+          ${ia || FC.util.noClaude ? '' : '<p class="aviso-caixa mt">O Analista IA está desligado. Os documentos são lidos localmente pelo Extrator. Para ler fotos e PDFs digitalizados com mais precisão, coloque sua chave da API do Claude em <a href="#" data-acao="ir" data-aba="ajustes">Ajustes</a>.</p>'}
           <details class="mt"><summary class="muted" style="cursor:pointer">Colar texto (SMS do banco, notificação, e-mail)</summary>
             <textarea id="imp-texto" rows="4" class="mt" style="width:100%;border:var(--borda);border-radius:7px;padding:8px" placeholder="Ex.: Compra aprovada no cartão final 1234: R$ 54,90 em IFOOD em 03/11/2026"></textarea>
             <button class="btn mt" data-acao="importar-texto">Ler texto</button>
@@ -2594,7 +2949,7 @@ FC.telas = (() => {
     const est = A.analista.porEstabelecimento(ctx.ym, conta, 8);
     const ano = serie.reduce((s, m) => ({ r: s.r + m.receitas, d: s.d + m.despesas }), { r: 0, d: 0 });
     const html = `
-      <div class="linha-acoes"><button class="btn" data-acao="baixar-resumo">Baixar resumo (.txt)</button><button class="btn" data-acao="exportar-ano">Exportar 12 meses (CSV)</button><button class="btn" data-acao="imprimir">Imprimir / salvar PDF</button></div>
+      <div class="linha-acoes"><button class="btn" data-acao="baixar-resumo">Baixar resumo (.txt)</button><button class="btn" data-acao="exportar-ano">Exportar 12 meses (CSV)</button>${FC.util.noClaude ? '' : '<button class="btn" data-acao="imprimir">Imprimir / salvar PDF</button>'}</div>
       <section class="cartao"><header><h3>Evolução mensal</h3><span class="sub">12 meses: receitas ${U.moeda(ano.r)} · despesas ${U.moeda(ano.d)} · guardado ${U.moeda(ano.r - ano.d)}</span></header><div id="g-linhas"></div></section>
       <div class="grade-2">
         <section class="cartao"><header><h3>O que o Analista observou</h3><span class="sub" style="text-transform:capitalize">${U.mesLabel(ctx.ym)}</span></header><ul class="obs">${obs.map((o) => `<li>${e(o)}</li>`).join('')}</ul></section>
@@ -2695,7 +3050,12 @@ FC.telas = (() => {
           </div>
           <button class="btn btn-p mt" data-acao="salvar-pessoas">Salvar nomes</button>
         </section>
-        <section class="cartao"><header><h3>Analista IA (Claude)</h3><span class="sub">${A.ia.disponivel() ? 'ligado' : 'desligado'}</span></header>
+        ${FC.util.noClaude ? `<section class="cartao"><header><h3>Claude da sua conta</h3><span class="sub">${A.ia.provedor() === 'conta' ? 'ligado' : 'não liberado'}</span></header>
+          <p style="margin-top:0">${A.ia.provedor() === 'conta'
+            ? 'O app pede ao Claude da sua conta para ler fotos e PDFs escaneados e para classificar as linhas dos extratos. Não precisa de chave de API: usa o limite do seu plano.'
+            : 'O Claude ainda não foi liberado para esta página. Permita quando o claude.ai perguntar, ou pelo menu de permissões da página. Enquanto isso, os agentes locais fazem a leitura.'}</p>
+          <div class="linha-acoes"><button class="btn" data-acao="testar-ia" ${A.ia.provedor() ? '' : 'disabled'}>Testar conexão</button></div>
+        </section>` : `        <section class="cartao"><header><h3>Analista IA (Claude)</h3><span class="sub">${A.ia.disponivel() ? 'ligado' : 'desligado'}</span></header>
           <div class="grade-campos">
             <label class="campo inteiro">Chave da API Anthropic<input id="aj-chave" type="password" placeholder="sk-ant-…" value="${e(c.ia.apiKey)}" autocomplete="off"></label>
             <label class="campo">Modelo<select id="aj-modelo">${[['claude-opus-5-5', 'Claude Opus 5.5 (mais preciso)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (equilíbrio)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (mais barato)']].map(([v, n]) => `<option value="${v}" ${c.ia.modelo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -2703,21 +3063,23 @@ FC.telas = (() => {
           </div>
           <p class="aviso-caixa mt">A chave fica salva só neste navegador e nunca vai para o backup. O documento é enviado direto do seu navegador para a API da Anthropic. Sem chave, tudo funciona localmente com o Extrator.</p>
           <div class="linha-acoes mt"><button class="btn btn-p" data-acao="salvar-ia">Salvar</button><button class="btn" data-acao="testar-ia">Testar conexão</button></div>
-        </section>
+        </section>`}
       </div>
       <div class="grade-2">
-        <section class="cartao"><header><h3>Leitura de fotos sem IA</h3></header>
+        ${FC.util.noClaude ? '' : `<section class="cartao"><header><h3>Leitura de fotos sem IA</h3></header>
           <label class="check"><input type="checkbox" id="aj-ocr" data-acao-change="ocr" ${c.ocr ? 'checked' : ''}> Ativar OCR local (Tesseract) para fotos de cupom quando a IA estiver desligada</label>
           <p class="muted" style="font-size:12.5px">Baixa ~10 MB na primeira vez e roda no seu navegador. É mais lento e menos preciso que a IA, mas não envia nada para fora.</p>
-        </section>
+        </section>`}
         <section class="cartao"><header><h3>Backup e dados</h3></header>
           <div class="linha-acoes">
             <button class="btn btn-p" data-acao="backup">Baixar backup (JSON)</button>
             <label class="btn">Restaurar backup<input type="file" accept=".json" id="restaurar" hidden></label>
             <button class="btn" data-acao="exportar-tudo">Exportar tudo (CSV)</button>
           </div>
-          <p class="muted mt" style="font-size:12.5px">Seus dados ficam guardados no navegador deste aparelho. Faça backup de vez em quando — e para usar em outro aparelho, restaure o arquivo lá.</p>
-          <div class="linha-acoes mt"><button class="btn" data-acao="carregar-exemplo">Recarregar dados de exemplo</button><button class="btn btn-perigo" data-acao="zerar">Começar do zero</button></div>
+          <p class="muted mt" style="font-size:12.5px">${FC.nuvem.estado === 'nuvem'
+            ? 'Seus dados ficam guardados na nuvem do claude.ai, nesta página: abra o mesmo link no celular ou no computador e está tudo lá. Só você e quem você der acesso de edição veem os dados. O backup é uma cópia extra para guardar.'
+            : 'Seus dados ficam guardados no navegador deste aparelho. Faça backup de vez em quando e, para usar em outro aparelho, restaure o arquivo lá.'}</p>
+          <div class="linha-acoes mt">${FC.util.noClaude ? '' : '<button class="btn" data-acao="carregar-exemplo">Recarregar dados de exemplo</button>'}<button class="btn btn-perigo" data-acao="zerar">Começar do zero</button></div>
           ${st().demo ? '<p class="aviso-caixa mt"><b>Você está vendo dados de exemplo.</b> Quando quiser usar de verdade, clique em “Começar do zero” (categorias e ajustes são mantidos).</p>' : ''}
         </section>
       </div>`;
@@ -2784,7 +3146,10 @@ FC.telas = (() => {
       <h2>${aba.nome}<small>${aba.sub}</small></h2>
       ${comConta ? `<div class="segmentado" role="group" aria-label="Conta">${[['todas', 'Tudo'], ['casal', 'Conjunta'], ['a', p.a], ['b', p.b]].map(([v, n]) => `<button data-acao="conta" data-conta="${v}" class="${ui.conta === v ? 'ativo' : ''}">${U.esc(n)}</button>`).join('')}</div>` : ''}
       ${comMes ? `<div class="seletor-mes"><button data-acao="mes" data-d="-1" aria-label="Mês anterior">‹</button><span>${U.mesLabel(ui.ym)}</span><button data-acao="mes" data-d="1" aria-label="Próximo mês">›</button></div>` : ''}
+      ${U.noClaude ? `<span class="nuvem nuvem-${FC.nuvem.estado}" title="Onde seus dados estão salvos">${{ nuvem: 'Salvo na nuvem', conectando: 'Conectando…', offline: 'Só neste navegador', local: 'Neste navegador' }[FC.nuvem.estado]}</span>` : ''}
       <div class="linha-acoes"><button class="btn btn-p" data-acao="novo">+ Novo lançamento</button></div>`;
+    const rodape = document.querySelector('.lateral-rodape');
+    if (rodape) rodape.innerHTML = `${FC.nuvem.estado === 'nuvem' ? 'Dados salvos na nuvem do claude.ai.' : 'Dados salvos só neste navegador.'}<br>Atalho: <kbd>N</kbd> novo lançamento.`;
   }
 
   let telaAtual = null;
@@ -2830,6 +3195,17 @@ FC.telas = (() => {
     const primeiro = fundo.querySelector('input, select, textarea');
     if (primeiro) primeiro.focus();
     return { el: fundo, fechar };
+  }
+
+  /* Confirmação dentro da própria página (o claude.ai bloqueia as caixas de diálogo do navegador). */
+  function confirmar(msg, rotulo = 'Confirmar') {
+    return new Promise((ok) => {
+      const m = modal('Confirmar', `<p style="margin:0;font-size:14.5px">${U.esc(msg)}</p>`,
+        `<button class="btn" data-fechar>Cancelar</button><button class="btn btn-p" data-sim>${U.esc(rotulo)}</button>`);
+      let respondeu = false;
+      m.el.querySelector('[data-sim]').addEventListener('click', () => { respondeu = true; m.fechar(); ok(true); });
+      new MutationObserver((_, obs) => { if (!m.el.isConnected) { obs.disconnect(); if (!respondeu) ok(false); } }).observe(document.body, { childList: true });
+    });
   }
 
   /* ---------- formulário de lançamento ---------- */
@@ -2895,7 +3271,7 @@ FC.telas = (() => {
       m.fechar();
     });
     const del = f.querySelector('[data-del]');
-    if (del) del.addEventListener('click', () => { if (confirm(`Excluir "${l.descricao}"?`)) { A.tesoureiro.remover(l.id); m.fechar(); toast('Excluído.'); } });
+    if (del) del.addEventListener('click', async () => { m.fechar(); if (await confirmar(`Excluir "${l.descricao}"?`, 'Excluir')) { A.tesoureiro.remover(l.id); toast('Excluído.'); } });
   }
 
   function formMeta(meta) {
@@ -3020,7 +3396,7 @@ FC.telas = (() => {
     pagar: (el) => { A.tesoureiro.marcarPagos([el.dataset.id]); toast('Conta marcada como paga.'); },
     'sel-todos': (el) => { document.querySelectorAll('.sel').forEach((c) => { c.checked = el.checked; }); selecao(); },
     'pagar-selecionados': () => { A.tesoureiro.marcarPagos(selecionados()); toast('Contas marcadas como pagas.'); },
-    'excluir-selecionados': () => { const ids = selecionados(); if (confirm(`Excluir ${ids.length} lançamento(s)?`)) ids.forEach((id) => A.tesoureiro.remover(id)); },
+    'excluir-selecionados': async () => { const ids = selecionados(); if (await confirmar(`Excluir ${ids.length} lançamento(s)?`, 'Excluir')) ids.forEach((id) => A.tesoureiro.remover(id)); },
     'exportar-csv': () => A.arquivista.exportarCSV(telaAtual.lista || [], `lancamentos-${ui.ym}.csv`),
     'exportar-tudo': () => A.arquivista.exportarCSV(st().lancamentos.slice().sort((a, b) => (a.data < b.data ? -1 : 1)), `lancamentos-completo-${U.hoje()}.csv`),
     'exportar-ano': () => {
@@ -3067,8 +3443,8 @@ FC.telas = (() => {
     retirar: (el) => formAporte(el.dataset.id, true),
     'nova-meta': () => formMeta(),
     'editar-meta': (el) => formMeta(st().metas.find((m) => m.id === el.dataset.id)),
-    'excluir-meta': (el) => { const m = st().metas.find((x) => x.id === el.dataset.id); if (confirm(`Excluir a meta "${m.nome}"?`)) { st().metas = st().metas.filter((x) => x !== m); FC.store.salvar(); } },
-    'baixar-resumo': () => U.baixar(`resumo-${ui.ym}.txt`, A.analista.relatorioTexto(ui.ym)),
+    'excluir-meta': async (el) => { const m = st().metas.find((x) => x.id === el.dataset.id); if (await confirmar(`Excluir a meta "${m.nome}"?`, 'Excluir')) { st().metas = st().metas.filter((x) => x !== m); FC.store.salvar(); } },
+    'baixar-resumo': () => A.arquivista.baixar(`resumo-${ui.ym}.txt`, A.analista.relatorioTexto(ui.ym)),
     imprimir: () => window.print(),
     'salvar-categorias': () => {
       document.querySelectorAll('tr[data-cat]').forEach((tr) => {
@@ -3087,10 +3463,10 @@ FC.telas = (() => {
       st().categorias.push({ id, nome, grupo: document.getElementById('nova-cat-grupo').value, orcamento: Number(document.getElementById('nova-cat-orc').value) || 0 });
       FC.store.salvar(); O.log('classificador', `Nova categoria "${nome}" — passo a reconhecê-la pelo nome.`); toast('Categoria criada.');
     },
-    'excluir-categoria': (el) => {
+    'excluir-categoria': async (el) => {
       const c = FC.store.categoria(el.dataset.id);
       const usos = st().lancamentos.filter((l) => l.categoriaId === c.id).length;
-      if (!confirm(`Excluir "${c.nome}"?${usos ? ` Os ${usos} lançamento(s) dela vão para "Outros".` : ''}`)) return;
+      if (!await confirmar(`Excluir "${c.nome}"?${usos ? ` Os ${usos} lançamento(s) dela vão para "Outros".` : ''}`, 'Excluir')) return;
       st().lancamentos.forEach((l) => { if (l.categoriaId === c.id) l.categoriaId = c.grupo === 'receita' ? 'extra' : 'outros'; });
       st().categorias = st().categorias.filter((x) => x.id !== c.id);
       st().regras = st().regras.filter((g) => g.categoriaId !== c.id);
@@ -3106,15 +3482,15 @@ FC.telas = (() => {
       FC.store.salvar(); O.log('ia', st().config.ia.apiKey ? `Ligado com o modelo ${st().config.ia.modelo}.` : 'Desligado (sem chave).'); toast('Configuração da IA salva.');
     },
     'testar-ia': async (el) => {
-      acoes['salvar-ia']();
+      if (!U.noClaude) acoes['salvar-ia']();
       el.disabled = true; el.textContent = 'Testando…';
-      try { await A.ia.testar(); toast('Conexão OK — o Analista IA está pronto.'); } catch (err) { O.log('ia', `Falha no teste: ${err.message}`, 'erro'); toast('Falhou: ' + err.message); }
+      try { await A.ia.testar(); toast('Conexão OK: o Claude está pronto.'); } catch (err) { const msg = A.ia.explicarErro(err); O.log('ia', `Falha no teste: ${msg}`, 'erro'); toast('Falhou: ' + msg); render(); }
       el.disabled = false; el.textContent = 'Testar conexão';
     },
     backup: () => A.arquivista.backup(),
-    'carregar-exemplo': () => { if (confirm('Substituir tudo pelos dados de exemplo?')) { FC.store.resetarDemo(); toast('Dados de exemplo carregados.'); } },
-    zerar: () => {
-      if (!confirm('Apagar todos os lançamentos, metas e o diário? Categorias, orçamentos e ajustes continuam. Faça um backup antes se quiser.')) return;
+    'carregar-exemplo': async () => { if (await confirmar('Substituir tudo pelos dados de exemplo?', 'Substituir')) { FC.store.resetarDemo(); toast('Dados de exemplo carregados.'); } },
+    zerar: async () => {
+      if (!await confirmar('Apagar todos os lançamentos, metas e o diário? Categorias, orçamentos e ajustes continuam. Faça um backup antes se quiser.', 'Apagar tudo')) return;
       const s = st();
       s.lancamentos = []; s.diario = []; s.acertos = []; s.demo = false;
       s.metas = [{ id: 'reserva', nome: 'Reserva de emergência', alvo: 0, guardado: 0, prazo: '', especial: true }];
@@ -3175,6 +3551,18 @@ FC.telas = (() => {
   A.sentinela.varredura(mesAtual);
   if (geradas) O.log('tesoureiro', `Contas fixas de ${U.mesLabel(mesAtual)} já estão na lista de contas a pagar.`);
   render();
+
+  if (U.noClaude) {
+    FC.nuvem.aoMudar(() => render());
+    FC.nuvem.iniciar().then((ok) => {
+      if (ok) {
+        const n = A.tesoureiro.gerarRecorrentes(mesAtual);
+        O.log('arquivista', `Dados carregados da nuvem: ${st().lancamentos.length} lançamento(s)${n ? `, ${n} recorrente(s) do mês criadas` : ''}.`);
+      }
+      render();
+    });
+    A.ia.iniciar();
+  }
 })();
 
 </script>

@@ -267,6 +267,13 @@ FC.agentes.extrator = (() => {
     return datas >= 3 && comValor >= 6 && /extrato|movimenta[cç]|total de (entradas|sa[ií]das)|saldo/i.test(texto);
   }
 
+  /* Pessoa física (CPF, mesmo mascarado) ou empresa (CNPJ, LTDA, S.A., MEI)? */
+  function contraparteDe(txt) {
+    if (/(•{2,}|\*{3})\.?\d{3}\.\d{3}-|\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/.test(txt)) return 'pessoa';
+    if (/\d{2}\.\d{3}\.\d{3}\/\d{4}|\b(ltda|eireli|s\.?\/?a\.?|me|mei|epp|cia)\b|institui[cç][aã]o|^\d{2}\.\d{3}\.\d{3}\s/i.test(txt)) return 'empresa';
+    return '';
+  }
+
   const titulo = (s) => s.toLowerCase().replace(/(^|[\s(/-])\S/g, (c) => c.toUpperCase());
 
   function nomeLimpo(s) {
@@ -317,7 +324,7 @@ FC.agentes.extrator = (() => {
         }
         const interno = INTERNO.test(bruto) || (titular.length > 8 && U.normalizar(nome).startsWith(titular));
         atual = {
-          data, tipo, forma, interno, bruto,
+          data, tipo, forma, interno, bruto, contraparte: contraparteDe(nome),
           descricao: interno ? bruto.replace(/\s+-\s+.*$/, '') : (nomeLimpo(nome) || bruto),
           valor: U.parseValor(v[2]),
         };
@@ -339,6 +346,7 @@ FC.agentes.extrator = (() => {
       docTipo: 'Extrato PDF',
       origem: 'importado',
       interno: i.interno,
+      contraparte: i.contraparte,
       notas: i.bruto,
       texto: i.bruto, // a linha original ("Reembolso recebido…", "Compra no débito…") também dá pistas ao Classificador
       confiancaExtracao: 0.9,

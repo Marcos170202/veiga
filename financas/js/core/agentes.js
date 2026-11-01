@@ -74,7 +74,7 @@ FC.orquestrador = (() => {
       rascunhos = rascunhos.map((r) => {
         const c = r.interno
           ? { categoriaId: r.tipo === 'despesa' ? 'investimentos' : 'extra', confianca: 0.9, motivo: 'entre suas contas — fica de fora' }
-          : r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: 'sugerido pela IA' }
+          : r.categoriaId ? { categoriaId: r.categoriaId, confianca: r.confianca ?? 0.8, motivo: r.motivo || 'sugerido pela IA' }
             : FC.agentes.classificador.classificar(r);
         return Object.assign({
           id: FC.util.uid(),
@@ -85,6 +85,13 @@ FC.orquestrador = (() => {
           arquivo: file.name,
         }, r, c);
       });
+
+      // extratos: o Claude revisa as categorias das linhas que o Classificador local não tinha certeza
+      const semIA = rascunhos.filter((r) => r.origem !== 'ia' && !r.interno);
+      if (opcoes.usarIA && semIA.length && FC.agentes.ia.disponivel()) {
+        etapas('ia');
+        await FC.agentes.ia.classificarLote(semIA);
+      }
 
       etapas('sentinela');
       rascunhos.forEach((r) => { r.duplicado = FC.agentes.sentinela.pareceDuplicado(r); });

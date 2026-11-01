@@ -30,7 +30,7 @@ FC.agentes.leitor = (() => {
   async function lerTexto(file) {
     const buf = await file.arrayBuffer();
     let txt = new TextDecoder('utf-8').decode(buf);
-    if (txt.includes('�')) txt = new TextDecoder('iso-8859-1').decode(buf); // extratos de banco antigos
+    if (txt.includes('\uFFFD')) txt = new TextDecoder('iso-8859-1').decode(buf); // extratos de banco antigos
     return txt;
   }
 
@@ -58,6 +58,27 @@ FC.agentes.leitor = (() => {
       paginas.push(texto);
     }
     return { paginas: pdf.numPages, texto: paginas.join('\n\n') };
+  }
+
+  /* PDF escaneado (sem texto): transforma as primeiras páginas em imagens para o Claude ler. */
+  async function paginasComoImagens(file, max = 3) {
+    const i = await carregarPrimeiro(PDFJS);
+    const lib = window.pdfjsLib;
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER[i];
+    const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const imagens = [];
+    for (let p = 1; p <= Math.min(pdf.numPages, max); p++) {
+      const pag = await pdf.getPage(p);
+      const base = pag.getViewport({ scale: 1 });
+      const escala = Math.min(2, 1600 / Math.max(base.width, base.height));
+      const vp = pag.getViewport({ scale: escala });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+      await pag.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+      imagens.push(await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85)));
+    }
+    O.log('leitor', `Converti ${imagens.length} página(s) de "${file.name}" em imagem para o Claude.`);
+    return imagens;
   }
 
   async function ocr(file) {
@@ -91,5 +112,5 @@ FC.agentes.leitor = (() => {
     return saida;
   }
 
-  return { ler, ocr, tipoDe };
+  return { ler, ocr, tipoDe, paginasComoImagens };
 })();

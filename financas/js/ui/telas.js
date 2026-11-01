@@ -37,7 +37,13 @@ FC.telas = (() => {
     const res = A.planejador.reserva(ctx.ym);
     const metas = A.planejador.metas().filter((m) => !m.especial).slice(0, 3);
 
+    const vazio = !st().lancamentos.length;
     const html = `
+      ${vazio ? `<section class="cartao boas-vindas">
+        <div><h3>Comece pelo extrato do mês</h3>
+        <p>Ainda não há lançamentos${FC.nuvem.estado === 'conectando' ? ' (carregando da nuvem…)' : ''}. Envie o extrato do banco em PDF, CSV ou OFX, uma foto de recibo ou um boleto: os agentes separam cada movimentação, sugerem a categoria e você confere antes de lançar.</p></div>
+        <div class="linha-acoes"><button class="btn btn-p" data-acao="ir" data-aba="importar">Importar extrato ou recibo</button><button class="btn" data-acao="novo">Lançar à mão</button></div>
+      </section>` : ''}
       <section class="kpis">
         <div class="kpi"><div class="rot">Receitas do mês</div><div class="val">${U.moeda(t.receitas)}</div><div class="det">${ant.receitas ? `${t.receitas >= ant.receitas ? '+' : ''}${U.moeda(t.receitas - ant.receitas)} vs. mês anterior` : '&nbsp;'}</div></div>
         <div class="kpi"><div class="rot">Despesas do mês</div><div class="val">${U.moeda(t.despesas)}</div><div class="det">${ant.despesas ? `<b class="${varDesp > 0 ? 'sobe' : 'desce'}">${varDesp > 0 ? '▲' : '▼'} ${Math.abs(varDesp).toFixed(0)}%</b> vs. ${U.mesCurto(U.somaMes(ctx.ym, -1))}` : '&nbsp;'}</div></div>
@@ -192,6 +198,7 @@ FC.telas = (() => {
   /* =============== IMPORTAR =============== */
   function importar(ctx) {
     const ia = A.ia.disponivel();
+    const viaConta = A.ia.provedor() === 'conta';
     const r = ctx.rascunhos;
     const etapas = [['leitor', 'LE', 'Leitor'], ['ia', 'IA', 'Analista IA'], ['extrator', 'EX', 'Extrator'], ['classificador', 'CL', 'Classificador'], ['sentinela', 'SE', 'Sentinela']];
     const html = `
@@ -206,9 +213,10 @@ FC.telas = (() => {
           </label>
           <div class="grade-campos mt">
             <label class="campo">Lançar na conta<select id="imp-conta">${opcoesContas(ctx.impConta || 'casal')}</select></label>
-            <label class="campo">&nbsp;<span class="check"><input type="checkbox" id="imp-ia" ${ia ? '' : 'disabled'} ${ia && st().config.ia.sempre ? 'checked' : ''}> Usar o Analista IA (Claude)</span></label>
+            <label class="campo">&nbsp;<span class="check"><input type="checkbox" id="imp-ia" ${ia ? '' : 'disabled'} ${ia && (viaConta || st().config.ia.sempre) ? 'checked' : ''}> ${viaConta ? 'Usar o Claude da sua conta' : 'Usar o Analista IA (Claude)'}</span></label>
           </div>
-          ${ia ? '' : '<p class="aviso-caixa mt">O Analista IA está desligado. Os documentos são lidos localmente pelo Extrator. Para ler fotos e PDFs digitalizados com mais precisão, coloque sua chave da API do Claude em <a href="#" data-acao="ir" data-aba="ajustes">Ajustes</a>.</p>'}
+          ${viaConta ? '<p class="aviso-caixa mt"><b>Claude da sua conta ligado.</b> Valores e datas de extratos são lidos aqui no app; o Claude escolhe as categorias e lê fotos e PDFs escaneados. Na primeira vez o claude.ai pede sua permissão. Usa o limite do seu plano, sem chave de API.</p>' : ''}
+          ${ia || FC.util.noClaude ? '' : '<p class="aviso-caixa mt">O Analista IA está desligado. Os documentos são lidos localmente pelo Extrator. Para ler fotos e PDFs digitalizados com mais precisão, coloque sua chave da API do Claude em <a href="#" data-acao="ir" data-aba="ajustes">Ajustes</a>.</p>'}
           <details class="mt"><summary class="muted" style="cursor:pointer">Colar texto (SMS do banco, notificação, e-mail)</summary>
             <textarea id="imp-texto" rows="4" class="mt" style="width:100%;border:var(--borda);border-radius:7px;padding:8px" placeholder="Ex.: Compra aprovada no cartão final 1234: R$ 54,90 em IFOOD em 03/11/2026"></textarea>
             <button class="btn mt" data-acao="importar-texto">Ler texto</button>
@@ -381,7 +389,7 @@ FC.telas = (() => {
     const est = A.analista.porEstabelecimento(ctx.ym, conta, 8);
     const ano = serie.reduce((s, m) => ({ r: s.r + m.receitas, d: s.d + m.despesas }), { r: 0, d: 0 });
     const html = `
-      <div class="linha-acoes"><button class="btn" data-acao="baixar-resumo">Baixar resumo (.txt)</button><button class="btn" data-acao="exportar-ano">Exportar 12 meses (CSV)</button><button class="btn" data-acao="imprimir">Imprimir / salvar PDF</button></div>
+      <div class="linha-acoes"><button class="btn" data-acao="baixar-resumo">Baixar resumo (.txt)</button><button class="btn" data-acao="exportar-ano">Exportar 12 meses (CSV)</button>${FC.util.noClaude ? '' : '<button class="btn" data-acao="imprimir">Imprimir / salvar PDF</button>'}</div>
       <section class="cartao"><header><h3>Evolução mensal</h3><span class="sub">12 meses: receitas ${U.moeda(ano.r)} · despesas ${U.moeda(ano.d)} · guardado ${U.moeda(ano.r - ano.d)}</span></header><div id="g-linhas"></div></section>
       <div class="grade-2">
         <section class="cartao"><header><h3>O que o Analista observou</h3><span class="sub" style="text-transform:capitalize">${U.mesLabel(ctx.ym)}</span></header><ul class="obs">${obs.map((o) => `<li>${e(o)}</li>`).join('')}</ul></section>
@@ -482,7 +490,12 @@ FC.telas = (() => {
           </div>
           <button class="btn btn-p mt" data-acao="salvar-pessoas">Salvar nomes</button>
         </section>
-        <section class="cartao"><header><h3>Analista IA (Claude)</h3><span class="sub">${A.ia.disponivel() ? 'ligado' : 'desligado'}</span></header>
+        ${FC.util.noClaude ? `<section class="cartao"><header><h3>Claude da sua conta</h3><span class="sub">${A.ia.provedor() === 'conta' ? 'ligado' : 'não liberado'}</span></header>
+          <p style="margin-top:0">${A.ia.provedor() === 'conta'
+            ? 'O app pede ao Claude da sua conta para ler fotos e PDFs escaneados e para classificar as linhas dos extratos. Não precisa de chave de API: usa o limite do seu plano.'
+            : 'O Claude ainda não foi liberado para esta página. Permita quando o claude.ai perguntar, ou pelo menu de permissões da página. Enquanto isso, os agentes locais fazem a leitura.'}</p>
+          <div class="linha-acoes"><button class="btn" data-acao="testar-ia" ${A.ia.provedor() ? '' : 'disabled'}>Testar conexão</button></div>
+        </section>` : `        <section class="cartao"><header><h3>Analista IA (Claude)</h3><span class="sub">${A.ia.disponivel() ? 'ligado' : 'desligado'}</span></header>
           <div class="grade-campos">
             <label class="campo inteiro">Chave da API Anthropic<input id="aj-chave" type="password" placeholder="sk-ant-…" value="${e(c.ia.apiKey)}" autocomplete="off"></label>
             <label class="campo">Modelo<select id="aj-modelo">${[['claude-opus-5-5', 'Claude Opus 5.5 (mais preciso)'], ['claude-sonnet-5-5', 'Claude Sonnet 5.5 (equilíbrio)'], ['claude-haiku-5-5', 'Claude Haiku 5.5 (mais barato)']].map(([v, n]) => `<option value="${v}" ${c.ia.modelo === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
@@ -490,21 +503,23 @@ FC.telas = (() => {
           </div>
           <p class="aviso-caixa mt">A chave fica salva só neste navegador e nunca vai para o backup. O documento é enviado direto do seu navegador para a API da Anthropic. Sem chave, tudo funciona localmente com o Extrator.</p>
           <div class="linha-acoes mt"><button class="btn btn-p" data-acao="salvar-ia">Salvar</button><button class="btn" data-acao="testar-ia">Testar conexão</button></div>
-        </section>
+        </section>`}
       </div>
       <div class="grade-2">
-        <section class="cartao"><header><h3>Leitura de fotos sem IA</h3></header>
+        ${FC.util.noClaude ? '' : `<section class="cartao"><header><h3>Leitura de fotos sem IA</h3></header>
           <label class="check"><input type="checkbox" id="aj-ocr" data-acao-change="ocr" ${c.ocr ? 'checked' : ''}> Ativar OCR local (Tesseract) para fotos de cupom quando a IA estiver desligada</label>
           <p class="muted" style="font-size:12.5px">Baixa ~10 MB na primeira vez e roda no seu navegador. É mais lento e menos preciso que a IA, mas não envia nada para fora.</p>
-        </section>
+        </section>`}
         <section class="cartao"><header><h3>Backup e dados</h3></header>
           <div class="linha-acoes">
             <button class="btn btn-p" data-acao="backup">Baixar backup (JSON)</button>
             <label class="btn">Restaurar backup<input type="file" accept=".json" id="restaurar" hidden></label>
             <button class="btn" data-acao="exportar-tudo">Exportar tudo (CSV)</button>
           </div>
-          <p class="muted mt" style="font-size:12.5px">Seus dados ficam guardados no navegador deste aparelho. Faça backup de vez em quando — e para usar em outro aparelho, restaure o arquivo lá.</p>
-          <div class="linha-acoes mt"><button class="btn" data-acao="carregar-exemplo">Recarregar dados de exemplo</button><button class="btn btn-perigo" data-acao="zerar">Começar do zero</button></div>
+          <p class="muted mt" style="font-size:12.5px">${FC.nuvem.estado === 'nuvem'
+            ? 'Seus dados ficam guardados na nuvem do claude.ai, nesta página: abra o mesmo link no celular ou no computador e está tudo lá. Só você e quem você der acesso de edição veem os dados. O backup é uma cópia extra para guardar.'
+            : 'Seus dados ficam guardados no navegador deste aparelho. Faça backup de vez em quando e, para usar em outro aparelho, restaure o arquivo lá.'}</p>
+          <div class="linha-acoes mt">${FC.util.noClaude ? '' : '<button class="btn" data-acao="carregar-exemplo">Recarregar dados de exemplo</button>'}<button class="btn btn-perigo" data-acao="zerar">Começar do zero</button></div>
           ${st().demo ? '<p class="aviso-caixa mt"><b>Você está vendo dados de exemplo.</b> Quando quiser usar de verdade, clique em “Começar do zero” (categorias e ajustes são mantidos).</p>' : ''}
         </section>
       </div>`;

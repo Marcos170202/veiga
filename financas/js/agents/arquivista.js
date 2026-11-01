@@ -8,6 +8,10 @@ FC.agentes.arquivista = (() => {
     papel: 'Exporta CSV (abre no Excel/Sheets), faz backup completo em JSON e restaura quando precisar.',
   });
 
+  const baixar = (nome, conteudo, tipo) => U.baixar(nome, conteudo, tipo)
+    .then(() => true)
+    .catch((e) => { O.log('arquivista', `Download de "${nome}" não concluído (${e.code || e.message}).`, 'aviso'); return false; });
+
   const celula = (v) => {
     const s = String(v ?? '');
     return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -23,7 +27,7 @@ FC.agentes.arquivista = (() => {
       l.recorrente ? 'sim' : 'não', l.parcela ? `${l.parcela.n}/${l.parcela.total}` : '', l.origem, l.notas,
     ].map(celula).join(';'));
     // BOM para o Excel reconhecer acentos
-    U.baixar(nome, '﻿' + [cab.join(';'), ...linhas].join('\r\n'), 'text/csv;charset=utf-8');
+    baixar(nome, '﻿' + [cab.join(';'), ...linhas].join('\r\n'), 'text/csv;charset=utf-8');
     O.log('arquivista', `Exportei ${lista.length} lançamento(s) em "${nome}".`);
   }
 
@@ -31,7 +35,7 @@ FC.agentes.arquivista = (() => {
     const nome = `backup-financas-${U.hoje()}.json`;
     const copia = JSON.parse(JSON.stringify(st()));
     copia.config.ia.apiKey = ''; // nunca exporta a chave
-    U.baixar(nome, JSON.stringify(copia, null, 2), 'application/json');
+    baixar(nome, JSON.stringify(copia, null, 2), 'application/json');
     O.log('arquivista', `Backup completo salvo em "${nome}" (${st().lancamentos.length} lançamentos).`);
   }
 
@@ -46,8 +50,8 @@ FC.agentes.arquivista = (() => {
   }
 
   function modeloCSV() {
-    U.baixar('modelo-importacao.csv', '﻿Data;Descrição;Valor\r\n05/11/2026;Salário;8200,00\r\n07/11/2026;Carrefour;-412,35\r\n10/11/2026;Aluguel;-2650,00\r\n', 'text/csv;charset=utf-8');
+    baixar('modelo-importacao.csv', '﻿Data;Descrição;Valor\r\n05/11/2026;Salário;8200,00\r\n07/11/2026;Carrefour;-412,35\r\n10/11/2026;Aluguel;-2650,00\r\n', 'text/csv;charset=utf-8');
   }
 
-  return { exportarCSV, backup, restaurar, modeloCSV };
+  return { exportarCSV, backup, restaurar, modeloCSV, baixar };
 })();

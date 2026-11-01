@@ -58,7 +58,7 @@ FC.agentes.tesoureiro = (() => {
     l.vencimento = l.vencimento || l.data;
     if (l.conta !== 'casal') l.pagoPor = l.conta;
     if (l.status === 'pago' && !l.pagoEm) l.pagoEm = U.hoje();
-    delete l.duplicado; delete l.texto; delete l.motivo; delete l.confiancaExtracao;
+    delete l.duplicado; delete l.texto; delete l.motivo; delete l.confiancaExtracao; delete l.interno; delete l.contraparte;
     return l;
   }
 
